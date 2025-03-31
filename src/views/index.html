@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My App</title>
+    <script>
+        async function fetchUsers() {
+            const response = await fetch('/users');
+            const users = await response.json();
+            document.getElementById('users').innerText = JSON.stringify(users, null, 2);
+        }
+    </script>
+</head>
+<body>
+    <h1>Welcome to My App</h1>
+    <button onclick="fetchUsers()">Load Users</button>
+    <pre id="users"></pre>
+</body>
+</html>

@@ -19,4 +19,6 @@ $ npm run dev
 
 ### With Docker
 
+```
 docker compose up --build
+```

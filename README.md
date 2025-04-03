@@ -2,7 +2,7 @@
 
 ## How does it work?
 
-A Nodejs server (using express) responds at https://localhost:3000, a sqlite database responds on port 3306.
+A Nodejs server (using express) responds at https://localhost:3000 with a sqlite database
 
 ### Initializing a database
 

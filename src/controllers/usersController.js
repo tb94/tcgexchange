@@ -14,10 +14,20 @@ exports.signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, password: hashedPassword });
+
+    // look for existing user, if a user does not exist `created` will be true and the new user instance will be returned
+    const [user, created] = await User.findOrCreate({
+      where: { username: username },
+      defaults: { password: hashedPassword } // this lets us set the password only if the user does not exist yet.
+    });
+
+    if (!created) {
+      return res.status(409).json({ error: 'Username is already taken' });
+    }
 
     res.status(201).json({ message: 'User created successfully', userId: user.id });
   } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ error: error.message });
   }
 };

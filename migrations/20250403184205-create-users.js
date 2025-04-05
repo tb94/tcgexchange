@@ -4,10 +4,14 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.renameColumn('Users', "email", "username");
-    await queryInterface.renameColumn('Users', "name", "password");
+    await queryInterface.addColumn('Users', "password", {
+      type: Sequelize.STRING,
+      allowNull: false,
+    });
+    await queryInterface.removeColumn('Users', "name");
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Users');
   }
 };

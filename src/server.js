@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/auth', usersRoutes);
+app.use('/auth', usersRoutes);
 app.use('/cards', cardRoutes);
 
 app.get('/', (req, res) => {

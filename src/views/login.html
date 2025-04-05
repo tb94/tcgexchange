@@ -172,24 +172,25 @@
 
       if (!username || !password) return;
 
-      // Replace with your actual auth logic
       console.log("Attempt login:", { username, password });
 
-      // You can send a POST request here like:
-      /*
-      const res = await fetch('/login', {
+      
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
 
+      
       const data = await res.json();
-      if (res.ok) {
-        // Redirect, store token, etc.
-      } else {
+      if (!res.ok) {
         alert(data.error || 'Login failed');
       }
-      */
+      
+      // save the jwt
+      localStorage.setItem('token', res.token);
+      
+      // window.location.href = '/dashboard.html' or something
     });
   </script>
 </body>

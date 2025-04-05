@@ -1,0 +1,125 @@
+    :root {
+        --bg: #f3f4f6;
+        --card-bg: #ffffff;
+        --text: #111827;
+        --highlight: #4f46e5;
+        --button-bg: #4f46e5;
+        --button-hover: #4338ca;
+        --link: #6b7280;
+    }
+
+    body.dark {
+        --bg: #1f2937;
+        --card-bg: #374151;
+        --text: #f3f4f6;
+        --highlight: #6366f1;
+        --button-bg: #6366f1;
+        --button-hover: #818cf8;
+        --link: #9ca3af;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 2rem;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+        max-width: 400px;
+        margin: auto;
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: background 0.3s;
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .toggle {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .toggle input {
+        display: none;
+    }
+
+    .toggle label {
+        background-color: var(--highlight);
+        border-radius: 20px;
+        cursor: pointer;
+        display: inline-block;
+        height: 26px;
+        position: relative;
+        width: 50px;
+    }
+
+    .toggle label::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 18px;
+        height: 18px;
+        background-color: white;
+        border-radius: 50%;
+        transition: transform 0.3s ease;
+    }
+
+    .toggle input:checked+label::after {
+        transform: translateX(24px);
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    input {
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    button {
+        padding: 0.75rem;
+        font-size: 1rem;
+        background-color: var(--button-bg);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+        background-color: var(--button-hover);
+    }
+
+    .small-link {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        color: var(--link);
+        text-decoration: none;
+    }
+
+    .small-link:hover {
+        text-decoration: underline;
+        color: var(--highlight);
+    }

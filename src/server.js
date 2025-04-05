@@ -8,14 +8,10 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 app.use('/auth', usersRoutes);
 app.use('/cards', cardRoutes);
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/views/index.html');
-});
-
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

@@ -1,7 +1,18 @@
-const token = localStorage.getItem('authToken');
+const token = localStorage.getItem('token');
 
-// validate the token ...
+if (!token) {
+    window.location.href = '/login.html';
+} else {
 
-// if (!valid) {
-window.location.href = '/login.html';
-// }
+    fetch('/auth/validate', {
+        headers: { Authorization: `Bearer ${token}` }
+    }).then((response) => {
+        if (!response.ok) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+    }).catch(() => {
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+    });
+}

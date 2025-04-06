@@ -55,6 +55,11 @@ exports.login = async (req, res) => {
   }
 };
 
+// Token Validation
+exports.validate = async (req, res) => {
+  res.sendStatus(200); // Token is valid if it passes auth middleware
+}
+
 // Get Current User
 exports.getCurrentUser = async (req, res) => {
   try {

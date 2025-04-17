@@ -20,11 +20,26 @@
         <h1>Search for Cards</h1>
 
         <form id="search-form">
-            <input type="text" id="name" placeholder="Search cards..." required />
+            <input type="text" id="name" placeholder="Card name" />
+
+            <select id="typeDropdown">
+                <option value="">Type</option>
+            </select>
+
+            <select id="subtypeDropdown">
+                <option value="">Subtype</option>
+            </select>
+
+            <select id="supertypeDropdown">
+                <option value="">Supertype</option>
+            </select>
+
+            <input type="number" id="hpMin" placeholder="Min HP" />
+            <input type="number" id="hpMax" placeholder="Max HP" />
             <button type="submit">Search</button>
         </form>
 
-        <div id="results" class="card-grid"></div>
+        <div id="card-results" class="card-grid"></div>
         <div id="loading-spinner" style="display: none; text-align: center;">Loading more cards...</div>
         <div id="pagination" class="pagination-controls"></div>
     </div>

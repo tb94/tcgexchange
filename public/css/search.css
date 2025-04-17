@@ -1,0 +1,90 @@
+.search-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 2rem;
+}
+
+form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+input[type="text"] {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.card-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, opacity 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.card.loaded {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card img {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+}
+
+.card button {
+    margin-top: 0.5rem;
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.card button:hover {
+    background: var(--button-hover);
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.pagination-controls button {
+    padding: 0.5rem 1rem;
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.pagination-controls button:hover {
+    background-color: var(--button-hover);
+}

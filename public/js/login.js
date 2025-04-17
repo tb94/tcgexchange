@@ -1,16 +1,3 @@
-function setTheme(isDark) {
-    document.body.classList.toggle('dark', isDark);
-    localStorage.setItem('darkMode', isDark);
-    document.getElementById('themeToggle').checked = isDark;
-}
-
-document.getElementById('themeToggle').addEventListener('change', (e) => {
-    setTheme(e.target.checked);
-});
-
-const storedTheme = localStorage.getItem('darkMode') === 'true';
-setTheme(storedTheme);
-
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
@@ -35,5 +22,5 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     // save the jwt
     localStorage.setItem('token', data.token);
 
-    window.location.href = '/';
+    window.location.href = '/search.html';
 });

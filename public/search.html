@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Cards</title>
+    <link rel="stylesheet" href="/css/search.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+</head>
+
+<body>
+    <div class="search-container">
+        <div class="toggle">
+            <span>🌙 Dark Mode</span>
+            <input type="checkbox" id="themeToggle" />
+            <label for="themeToggle" title="Toggle Dark Mode"></label>
+        </div>
+
+        <h1>Search for Cards</h1>
+
+        <form id="search-form">
+            <input type="text" id="name" placeholder="Search cards..." required />
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="results" class="card-grid"></div>
+        <div id="loading-spinner" style="display: none; text-align: center;">Loading more cards...</div>
+        <div id="pagination" class="pagination-controls"></div>
+    </div>
+
+    <script src="/js/search.js"></script>
+    <script src="/js/util.js" defer></script>
+</body>
+
+</html>

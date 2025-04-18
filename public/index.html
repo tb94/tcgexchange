@@ -3,127 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>TCG Exchange</title>
-  <style>
-    :root {
-      --bg: #f3f4f6;
-      --card-bg: #ffffff;
-      --text: #111827;
-      --highlight: #4f46e5;
-      --button-bg: #4f46e5;
-      --button-hover: #4338ca;
-      --link: #6b7280;
-    }
-
-    body.dark {
-      --bg: #1f2937;
-      --card-bg: #374151;
-      --text: #f3f4f6;
-      --highlight: #6366f1;
-      --button-bg: #6366f1;
-      --button-hover: #818cf8;
-      --link: #9ca3af;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    header {
-      background: var(--card-bg);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e5e7eb;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    nav a {
-      margin: 0 1rem;
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 500;
-      transition: color 0.2s ease;
-    }
-
-    nav a:hover {
-      color: var(--highlight);
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .settings-link {
-      font-size: 1.5rem;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .settings-link:hover {
-      color: var(--highlight);
-    }
-
-    .toggle {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .toggle input {
-      display: none;
-    }
-
-    .toggle label {
-      background-color: var(--highlight);
-      border-radius: 20px;
-      cursor: pointer;
-      display: inline-block;
-      height: 26px;
-      position: relative;
-      width: 50px;
-    }
-
-    .toggle label::after {
-      content: "";
-      position: absolute;
-      left: 4px;
-      top: 4px;
-      width: 18px;
-      height: 18px;
-      background-color: white;
-      border-radius: 50%;
-      transition: transform 0.3s ease;
-    }
-
-    .toggle input:checked + label::after {
-      transform: translateX(24px);
-    }
-
-    .main {
-      padding: 3rem 2rem;
-      text-align: center;
-    }
-
-    .main h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .main p {
-      font-size: 1.2rem;
-      color: var(--link);
-    }
-  </style>
+  <link rel="stylesheet" href="/css/index.css" />
 </head>
 <body>
   <header>
@@ -140,7 +20,7 @@
         <input type="checkbox" id="themeToggle" />
         <label for="themeToggle" title="Toggle Dark Mode"></label>
       </div>
-      <a href="/settings" class="settings-link" title="Settings">⚙️</a>
+      <a href="/settings.html" class="settings-link" title="Settings">⚙️</a>
     </div>
   </header>
 

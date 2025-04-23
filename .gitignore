@@ -137,3 +137,6 @@ dist
 
 # sqlite3
 *.sqlite
+
+#Kyle's way of interacting with ChatGPT
+full_dump.txt

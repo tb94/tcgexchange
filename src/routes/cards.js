@@ -2,10 +2,8 @@ const express = require('express');
 const axios = require('axios');
 const { body, validationResult } = require('express-validator');
 require('dotenv').config();
-
 const cardsController = require('../controllers/cardsController');
 const authMiddleware = require('../middlewares/auth');
-
 const router = express.Router();
 
 // ========================================

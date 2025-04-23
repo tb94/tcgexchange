@@ -88,3 +88,25 @@ input[type="text"] {
 .pagination-controls button:hover {
     background-color: var(--button-hover);
 }
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.button-group button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.button-group button:hover {
+    background: var(--button-hover);
+}

@@ -3,9 +3,14 @@ const axios = require('axios');
 const { body, validationResult } = require('express-validator');
 require('dotenv').config();
 
+const cardsController = require('../controllers/cardsController');
+const authMiddleware = require('../middlewares/auth');
+
 const router = express.Router();
 
-// Card Search Endpoint
+// ========================================
+// 📦 Card Search Endpoint
+// ========================================
 router.post('/search',
   [
     // Validation Rules
@@ -40,7 +45,7 @@ router.post('/search',
       if (hp) query.push(`hp:${hp}`);
       if (supertype) query.push(`supertype:${supertype}`);
 
-      // API Request
+      // API Request to Pokémon TCG API
       const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
         headers: { 'X-Api-Key': process.env.POKEMON_TCG_API_KEY },
         params: {
@@ -51,11 +56,26 @@ router.post('/search',
         }
       });
 
+      // Return card data to frontend
       res.json(response.data);
     } catch (error) {
-      console.error('Error fetching cards:', error);
+      console.error('Error fetching cards:', error.message);
       res.status(500).json({ error: 'Failed to fetch card data' });
     }
   }
 );
+
+// ========================================
+// ➕ Add to Collection (Placeholder Endpoint)
+// This will handle saving a card to a user's collection in the future
+// ========================================
+router.post('/add-to-collection', authMiddleware, cardsController.addToCollection);
+
+// ========================================
+// ⭐ Add to Wishlist (Placeholder Endpoint)
+// This will handle saving a card to a user's wishlist in the future
+// ========================================
+router.post('/add-to-wishlist', authMiddleware, cardsController.addToWishlist);
+
+// Export router to be used in server.js
 module.exports = router;

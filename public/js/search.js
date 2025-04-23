@@ -38,10 +38,13 @@ async function searchCards(page = 1, append = false) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
             cardEl.innerHTML = `
-        <img src="${card.images.small}" alt="${card.name}" />
-        <h3>${card.name}</h3>
-        <button data-id="${card.id}">Add to Collection</button>
-      `;
+                <img src="${card.images.small}" alt="${card.name}" />
+                <h3>${card.name}</h3>
+                <div class="button-group">
+                    <button class="collection-btn" data-id="${card.id}">Add to Collection</button>
+                    <button class="wishlist-btn" data-id="${card.id}">Add to Wishlist</button>
+                </div>
+                `;
             results.appendChild(cardEl);
 
             requestAnimationFrame(() => {

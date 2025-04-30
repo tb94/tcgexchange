@@ -4,23 +4,164 @@
     padding: 2rem;
 }
 
+:root {
+    --bg: #f3f4f6;
+    --card-bg: #ffffff;
+    --text: #111827;
+    --highlight: #4f46e5;
+    --button-bg: #4f46e5;
+    --button-hover: #4338ca;
+    --link: #6b7280;
+    --border: #e5e7eb;
+    --input-bg: #fff;
+}
+
+body.dark {
+    --bg: #1f2937;
+    --card-bg: #374151;
+    --text: #f3f4f6;
+    --highlight: #6366f1;
+    --button-bg: #6366f1;
+    --button-hover: #818cf8;
+    --link: #9ca3af;
+    --border: #4b5563;
+    --input-bg: #1f2937;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 2rem;
+    transition: background 0.3s, color 0.3s;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
 form {
+    max-width: 800px;
+    margin: auto;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+label {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    justify-content: center;
+    font-weight: 500;
+    text-wrap: nowrap;
+}
+
+select,
+input[type="text"],
+input[type="range"] {
+    display: flex;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--input-bg);
+    color: var(--text);
+    transition: border-color 0.2s;
+}
+
+input[type="range"] {
+    accent-color: var(--highlight);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    cursor: pointer;
+}
+
+.range-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+button[type="reset"] {
+    background-color: transparent;
+    color: var(--highlight);
+    border: 1px solid var(--highlight);
+}
+
+button[type="reset"]:hover {
+    background-color: var(--highlight);
+    color: white;
+}
+
+.button-group {
     display: flex;
     gap: 1rem;
-    margin-bottom: 2rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.text-group,
+.multiselect-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.range-group {
+    padding: 2rem;
+}
+
+.multiselect-group {
+    display: flex;
+    flex-flow: column wrap;
+    flex: 1;
+    gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    form {
+        padding: 1rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 input[type="text"] {
     flex-grow: 1;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-    background: var(--bg);
-    color: var(--text);
-}
-
-select {
     padding: 0.75rem;
     border-radius: 8px;
     border: 1px solid #ccc;

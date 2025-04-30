@@ -7,6 +7,7 @@
     <title>Search Cards</title>
     <link rel="stylesheet" href="/css/search.css" />
     <link rel="stylesheet" href="/css/login.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css" />
 </head>
 
 <body>
@@ -20,23 +21,131 @@
         <h1>Search for Cards</h1>
 
         <form id="search-form">
-            <input type="text" id="name" placeholder="Card name" />
+            <h2>Basic Filters</h2>
 
-            <select id="typeDropdown">
-                <option value="">Type</option>
-            </select>
+            <!-- Card Name -->
+            <input type="text" name="name" placeholder="Card name..." />
 
-            <select id="subtypeDropdown">
-                <option value="">Subtype</option>
-            </select>
+            <div class="multiselect-row">
+                <!-- Set Name -->
+                <div class="multiselect-group">
+                    <!-- Set Name -->
+                    <label for="sets">Sets:</label>
+                    <select multiple name="sets" id="sets"></select>
+                </div>
 
-            <select id="supertypeDropdown">
-                <option value="">Supertype</option>
-            </select>
+                <!-- Type -->
+                <div class="multiselect-group">
+                    <label for="types">Types:</label>
+                    <select multiple name="types" id="types"></select>
+                </div>
+                <!-- Supertype -->
+                <div class="multiselect-group">
+                    <label for="supertypes">Supertypes:</label>
+                    <select multiple name="supertypes" id="supertypes"></select>
+                </div>
+            </div>
 
-            <input type="number" id="hpMin" placeholder="Min HP" />
-            <input type="number" id="hpMax" placeholder="Max HP" />
-            <button type="submit">Search</button>
+            <!-- Type -->
+            <!-- <div class="multiselect-group">
+                <label for="types">Types:</label>
+                <select multiple name="types" id="types"></select>
+            </div> -->
+
+            <!-- Supertype -->
+            <!-- <div class="multiselect-group">
+                <label for="supertypes">Supertypes:</label>
+                <select multiple name="supertypes" id="supertypes"></select>
+            </div> -->
+
+            <!-- Advanced Filters Toggle -->
+            <details class="advanced-filters">
+                <summary><strong>Advanced Filters</strong></summary>
+
+                <!-- Subtype -->
+                <!-- <div class="multiselect-group">
+                    <label for="subtypes">Subtypes:</label>
+                    <select multiple name="subtypes" id="subtypes"></select>
+                </div> -->
+
+                <!-- HP Range -->
+                <div class="range-group">
+                    <label for="hp-slider">HP Range:</label>
+                    <div id="hp-slider"></div>
+                    <input type="hidden" name="hpMin" id="hpMin">
+                    <input type="hidden" name="hpMax" id="hpMax">
+                </div>
+
+                <!-- Retreat Cost Range -->
+                <div class="range-group">
+                    <label for="retreat-slider">Retreat Energy Cost:</label>
+                    <div id="retreat-slider"></div>
+                    <input type="hidden" name="retreatMin" id="retreatMin">
+                    <input type="hidden" name="retreatMax" id="retreatMax">
+                </div>
+
+                <!-- Attack Cost Range -->
+                <div class="range-group">
+                    <label for="attack-slider">Attack Energy Cost:</label>
+                    <div id="attack-slider"></div>
+                    <input type="hidden" name="attackMin" id="attackMin">
+                    <input type="hidden" name="attackMax" id="attackMax">
+                </div>
+
+                <div class="text-group">
+                    <!-- Pokedex Number -->
+                    <input type="text" name="nationalPokedexNumber" placeholder="Pokedex number..." />
+
+                    <!-- Card Number in Set -->
+                    <input type="text" name="cardNumber" placeholder="Card number in set..." />
+
+                    <!-- Level -->
+                    <input type="text" name="level" placeholder="Level..." />
+
+                    <!-- Artist -->
+                    <input type="text" name="artist" placeholder="Artist name..." />
+
+                    <!-- Flavor Text -->
+                    <input type="text" name="flavorText" placeholder="Flavor text..." />
+                </div>
+
+                <div class="multiselect-row">
+                    <div class="multiselect-group">
+                        <!-- Weakeness -->
+                        <label for="weaknesses">Weaknesses:</label>
+                        <select multiple name="weaknesses" id="weaknesses"></select>
+                    </div>
+
+                    <div class="multiselect-group">
+                        <!-- Resistance -->
+                        <label for="resistances">Resistances:</label>
+                        <select multiple name="resistances" id="resistances"></select>
+                    </div>
+
+                    <div class="multiselect-group">
+                        <!-- Regulation Mark -->
+                        <label for="regulationMarks">Regulation Marks:</label>
+                        <select multiple name="regulationMarks" id="regulationMarks"></select>
+                    </div>
+
+                    <div class="multiselect-group">
+                        <!-- Rarity -->
+                        <label for="rarities">Rarity:</label>
+                        <select multiple name="rarities" id="rarities"></select>
+                    </div>
+
+                    <div class="multiselect-group">
+                        <!-- Legalities -->
+                        <label for="legalities">Legalities:</label>
+                        <select multiple name="legalities" id="legalities"></select>
+                    </div>
+                </div>
+            </details>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit">Search</button>
+                <button type="reset">Reset Filters</button>
+            </div>
         </form>
 
         <div id="card-results" class="card-grid"></div>
@@ -44,8 +153,9 @@
         <div id="pagination" class="pagination-controls"></div>
     </div>
 
-    <script src="/js/search.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
     <script src="/js/util.js" defer></script>
+    <script src="/js/search.js"></script>
 </body>
 
 </html>

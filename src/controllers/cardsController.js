@@ -124,18 +124,18 @@ function buildQueryString(filters) {
     }
 
     // hp: { gte: 50, lte: 100 } `hp:[50 TO 100]`
-    if (filters.hp?.gte !== undefined || filters.hp?.lte !== undefined) {
-        queryParts.push(`hp:[${filters.hp.gte} TO ${filters.hp.lte}]`);
+    if (filters.hp.gte !== undefined || filters.hp.lte !== undefined) {
+        queryParts.push(`hp:[${filters.hp.gte || "*"} TO ${filters.hp.lte || "*"}]`);
     }
 
     // retreatCost: { gte: 1, lte: 3 } `retreatCost:[1 TO 3]`
     if (filters.retreatCost?.gte !== undefined || filters.retreatCost?.lte !== undefined) {
-        queryParts.push(`convertedRetreatCost:[${filters.retreatCost.gte} TO ${filters.retreatCost.lte}]`);
+        queryParts.push(`convertedRetreatCost:[${filters.retreatCost.gte || "*"} TO ${filters.retreatCost.lte || "*"}]`);
     }
 
     // attack energy cost: { gte: 1, lte: 3 } `attacks.convertedEnergyCost:[1 TO 3]`
-    if (filters.attackCost?.gte !== undefined || filters.attackCost?.lte !== undefined) {
-        queryParts.push(`attacks.convertedEnergyCost:[${filters.attackCost.gte} TO ${filters.attackCost.lte}]`);
+    if (filters.attackCost.gte !== undefined || filters.attackCost.lte !== undefined) {
+        queryParts.push(`attacks.convertedEnergyCost:[${filters.attackCost.gte || "*"} TO ${filters.attackCost.lte || "*"}]`);
     }
 
     // nationalPokedexNumber: `nationalPokedexNumber:25`

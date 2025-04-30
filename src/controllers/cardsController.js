@@ -2,20 +2,21 @@ const { validationResult } = require('express-validator');
 const { body } = require('express-validator');
 require('dotenv').config();
 const axios = require('axios');
+const setConverter = require('../util/setConverter');
 
 // Input validation
 exports.validationRules = [
     body('filters.name').optional().isString().withMessage('name must be a string'),
-    body('filters.set').optional().isArray().withMessage('set must be an array'),
-    body('filters.set.*').optional().isString().withMessage('each set must be a string'),
+    body('filters.sets').optional().isArray().withMessage('set must be an array'),
+    body('filters.sets.*').optional().isString().withMessage('each set must be a string'),
     body('filters.types').optional().isArray().withMessage('types must be an array'),
     body('filters.types.*').optional().isString().withMessage('each type must be a string'),
-    body('filters.supertype').optional().isArray().withMessage('supertype must be an array'),
-    body('filters.supertype.*').optional().isString().withMessage('each supertype must be a string'),
-    body('filters.rarity').optional().isArray().withMessage('rarity must be an array'),
-    body('filters.rarity.*').optional().isString().withMessage('each rarity must be a string'),
-    body('filters.regulationMark').optional().isArray().withMessage('regulationMark must be an array'),
-    body('filters.regulationMark.*').optional().isString().withMessage('each regulationMark must be a string'),
+    body('filters.supertypes').optional().isArray().withMessage('supertype must be an array'),
+    body('filters.supertypes.*').optional().isString().withMessage('each supertype must be a string'),
+    body('filters.rarities').optional().isArray().withMessage('rarity must be an array'),
+    body('filters.rarities.*').optional().isString().withMessage('each rarity must be a string'),
+    body('filters.regulationMarks').optional().isArray().withMessage('regulationMark must be an array'),
+    body('filters.regulationMarks.*').optional().isString().withMessage('each regulationMark must be a string'),
     body('filters.hp').optional().isObject().withMessage('hp must be an object'),
     body('filters.hp.gte').optional().isNumeric().withMessage('hp.gte must be a number'),
     body('filters.hp.lte').optional().isNumeric().withMessage('hp.lte must be a number'),
@@ -29,9 +30,7 @@ exports.validationRules = [
     body('filters.cardnumber').optional().isNumeric().withMessage('cardnumber must be a number'),
     body('filters.artist').optional().isString().withMessage('artist must be a string'),
     body('filters.text').optional().isString().withMessage('text must be a string'),
-    body('filters.level').optional().isObject().withMessage('level must be an object'),
-    body('filters.level.gte').optional().isNumeric().withMessage('level.gte must be a number'),
-    body('filters.level.lte').optional().isNumeric().withMessage('level.lte must be a number'),
+    body('filters.level').optional().isNumeric().withMessage('level must be a number'),
     body('filters.weaknesses').optional().isArray().withMessage('weaknesses must be an array'),
     body('filters.weaknesses.*').optional().isString().withMessage('each weakness must be a string'),
     body('filters.resistances').optional().isArray().withMessage('resistances must be an array'),
@@ -89,64 +88,59 @@ function buildQueryString(filters) {
     // Iterate over filters and build query string
 
     // name: `(name:Pikachu)`
-    if (filters.name) {
+    if (filters.name && filters.name.trim() !== '') {
         queryParts.push(`name:"${filters.name}"`);
     }
 
     // set: [] `(set.id:base1 OR set.id:base4)`
-    if (filters.set) {
-        const setQuery = filters.set.map(set => `set.id:${set}`).join(' OR '); // TODO: map the set names to their IDs so that the client only needs set names
-        queryParts.push(`(${setQuery})`);
+    if (filters.sets && filters.sets.length > 0) {
+        queryParts.push(`(${setConverter.convertNamesToIds(filters.sets).map(set => `set.id:${set}`).join(' OR ')})`);
     }
 
     // types: [] `(types:grass OR types:fire)`
-    if (filters.types) {
-        const typeQuery = filters.types.map(type => `types:${type}`).join(' OR ');
-        queryParts.push(`(${typeQuery})`);
+    if (filters.types && filters.types.length > 0) {
+        queryParts.push(`(${filters.types.map(type => `types:${type}`).join(' OR ')})`);
     }
 
     // subtypes: [] `(subtypes:stage2 OR subtypes:ex)` // case insensitivity through the API means we can't search for "ex" without also searching for "EX" - probably leave this out until we can figure out a plan.
-    // if (filters.subtypes) {
+    // if (filters.subtypes && filters.subtypes.length > 0) {
     //     const subtypeQuery = filters.subtypes.map(subtype => `subtypes:${subtype}`).join(' OR ');
     //     queryParts.push(`(${subtypeQuery})`);
     // }
 
     // supertype: [] `(supertype:Pokémon OR supertype:Trainer)`
-    if (filters.supertype) {
-        const supertypeQuery = filters.supertype.map(supertype => `supertype:${supertype}`).join(' OR ');
-        queryParts.push(`(${supertypeQuery})`);
+    if (filters.supertypes && filters.supertypes.length > 0) {
+        queryParts.push(`(${filters.supertypes.map(supertype => `supertype:${supertype}`).join(' OR ')})`);
     }
 
     // rarity: [] `(rarity:"Double Rare" OR rarity:"Hyper Rare")`
-    if (filters.rarity) {
-        const rarityQuery = filters.rarity.map(rarity => `rarity:"${rarity}"`).join(' OR ');
-        queryParts.push(`(${rarityQuery})`);
+    if (filters.rarities && filters.rarities.length > 0) {
+        queryParts.push(`(${filters.rarities.map(rarity => `rarity:"${rarity}"`).join(' OR ')})`);
     }
 
     // regulationMark: [] `(regulationMark:D OR regulationMark:E)`
-    if (filters.regulationMark) {
-        const regulationMarkQuery = filters.regulationMark.map(mark => `regulationMark:${mark}`).join(' OR ');
-        queryParts.push(`(${regulationMarkQuery})`);
+    if (filters.regulationMarks && filters.regulationMarks.length > 0) {
+        queryParts.push(`(${filters.regulationMarks.map(mark => `regulationMark:${mark}`).join(' OR ')})`);
     }
 
     // hp: { gte: 50, lte: 100 } `hp:[50 TO 100]`
-    if (filters.hp) {
+    if (filters.hp?.gte !== undefined || filters.hp?.lte !== undefined) {
         queryParts.push(`hp:[${filters.hp.gte} TO ${filters.hp.lte}]`);
     }
 
     // retreatCost: { gte: 1, lte: 3 } `retreatCost:[1 TO 3]`
-    if (filters.retreatCost) {
-        queryParts.push(`retreatCost:[${filters.retreatCost.gte} TO ${filters.retreatCost.lte}]`);
+    if (filters.retreatCost?.gte !== undefined || filters.retreatCost?.lte !== undefined) {
+        queryParts.push(`convertedRetreatCost:[${filters.retreatCost.gte} TO ${filters.retreatCost.lte}]`);
     }
 
     // attack energy cost: { gte: 1, lte: 3 } `attacks.convertedEnergyCost:[1 TO 3]`
-    if (filters.attackCost) {
-        queryParts.push(`attacks.convertedEnergyCost:[${attack.gte} TO ${attack.lte}]`);
+    if (filters.attackCost?.gte !== undefined || filters.attackCost?.lte !== undefined) {
+        queryParts.push(`attacks.convertedEnergyCost:[${filters.attackCost.gte} TO ${filters.attackCost.lte}]`);
     }
 
     // nationalPokedexNumber: `nationalPokedexNumber:25`
     if (filters.nationalPokedexNumber) {
-        queryParts.push(`nationalPokedexNumber:${filters.nationalPokedexNumber}`);
+        queryParts.push(`nationalPokedexNumbers:${filters.nationalPokedexNumber}`);
     }
 
     // cardnumber: `number:125`
@@ -164,27 +158,24 @@ function buildQueryString(filters) {
         queryParts.push(`flavorText:"${filters.text}"`);
     }
 
-    // level: { gte: 10, lte: 30 } `level:[10 TO 30]`
+    // level: `level:17`
     if (filters.level) {
-        queryParts.push(`(level:[${filters.level.gte} TO ${filters.level.lte}])`);
+        queryParts.push(`level:${filters.level}`);
     }
 
     // weaknesses: [] `(weaknesses.type:water OR weaknesses.type:fire)`
-    if (filters.weaknesses) {
-        const weaknessQuery = filters.weaknesses.map(weakness => `weaknesses.type:${weakness}`).join(' OR ');
-        queryParts.push(`(${weaknessQuery})`);
+    if (filters.weaknesses && filters.weaknesses.length > 0) {
+        queryParts.push(`(${filters.weaknesses.map(weakness => `weaknesses.type:${weakness}`).join(' OR ')})`);
     }
 
     // resistance: [] `(resistances.type:water OR resistances.type:fire)`
-    if (filters.resistances) {
-        const resistanceQuery = filters.resistances.map(resistance => `resistances.type:${resistance}`).join(' OR ');
-        queryParts.push(`(${resistanceQuery})`);
+    if (filters.resistances && filters.resistances.length > 0) {
+        queryParts.push(`(${filters.resistances.map(resistance => `resistances.type:${resistance}`).join(' OR ')})`);
     }
 
     // legalities: [] `(legalities.standard:legal OR legalities.expanded:legal)`
-    if (filters.legalities) {
-        const legalityQuery = filters.legalities.map(legality => `legalities.${legality}:Legal`).join(' OR ');
-        queryParts.push(`(${legalityQuery})`);
+    if (filters.legalities && filters.legalities.length > 0) {
+        queryParts.push(`(${filters.legalities.map(legality => `legalities.${legality.toLowerCase()}:Legal`).join(' OR ')})`);
     }
 
     // tcgplayer.prices: { gte: 15, lte: 30 } //  I don't understand the pricing for the tcgplayer and cardmarket objects. we might have to do some extra parsing for that.

@@ -33,3 +33,14 @@ $ npm run dev
 $ docker compose up --build
 
 ```
+
+### Linting
+
+```
+$ npm run lint
+```
+#### Auto Fix
+```
+$ npm run lint:fix
+```
+This may have undesireable effects, use at your own risk.

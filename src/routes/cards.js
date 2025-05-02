@@ -6,7 +6,8 @@ require('dotenv').config();
 const router = express.Router();
 
 // Card Search Endpoint
-router.post('/search',
+router.post(
+  '/search',
   [
     // Validation Rules
     body('name').optional().isString(),
@@ -27,11 +28,14 @@ router.post('/search',
     }
 
     // Extract filters from request body
-    const { name, set, rarity, types, subtypes, hp, supertype, page = 1, pageSize = 20 } = req.body;
+    const {
+      name, set, rarity, types, subtypes, hp, supertype,
+      page = 1, pageSize = 20
+    } = req.body;
 
     try {
       // Build query string for PokémonTCG API
-      let query = [];
+      const query = [];
       if (name) query.push(`name:${name}`);
       if (set) query.push(`set.id:${set}`);
       if (rarity) query.push(`rarity:${rarity}`);
@@ -51,10 +55,10 @@ router.post('/search',
         }
       });
 
-      res.json(response.data);
+      return res.json(response.data);
     } catch (error) {
       console.error('Error fetching cards:', error);
-      res.status(500).json({ error: 'Failed to fetch card data' });
+      return res.status(500).json({ error: 'Failed to fetch card data' });
     }
   }
 );

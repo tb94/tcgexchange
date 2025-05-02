@@ -4,7 +4,9 @@
     "description": "TCG Portfolio Sharing",
     "main": "src/server.js",
     "scripts": {
-        "dev": "node src/server.js"
+        "dev": "node src/server.js",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix"
     },
     "author": "Tim Bretz & Kyle LaPointe",
     "license": "ISC",
@@ -21,6 +23,8 @@
         "sqlite3": "^5.1.7"
     },
     "devDependencies": {
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-plugin-import": "^2.31.0",
         "sequelize-cli": "^6.6.2"
     }
 }

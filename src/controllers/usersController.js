@@ -15,10 +15,12 @@ exports.signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // look for existing user, if a user does not exist `created` will be true and the new user instance will be returned
+    // look for existing user,
+    // if a user does not exist `created` will be true and the new user instance will be returned
     const [user, created] = await User.findOrCreate({
-      where: { username: username },
-      defaults: { password: hashedPassword } // this lets us set the password only if the user does not exist yet.
+      where: { username },
+      // set the password only if the user does not exist yet.
+      defaults: { password: hashedPassword }
     });
 
     if (!created) {
@@ -27,10 +29,10 @@ exports.signup = async (req, res) => {
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1h' });
 
-    res.json({ token });
+    return res.json({ token });
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -51,16 +53,16 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
 
-    res.json({ token });
+    return res.json({ token });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
 // Token Validation
 exports.validate = async (req, res) => {
   res.sendStatus(200); // Token is valid if it passes auth middleware
-}
+};
 
 // Get Current User
 exports.getCurrentUser = async (req, res) => {
@@ -71,8 +73,8 @@ exports.getCurrentUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json(user);
+    return res.json(user);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };

@@ -209,7 +209,8 @@ async function searchCards(page = 1, append = false) {
             body: JSON.stringify({
                 filters: filters,
                 page,
-                pageSize
+                pageSize,
+                sort: form.sort.value || 'name'
             }),
         });
 

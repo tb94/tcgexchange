@@ -6,14 +6,12 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 
-const env = process.env.NODE_ENV || 'development';
 const basename = path.basename(__filename);
 const db = {};
 // eslint-disable-next-line import/no-dynamic-require
-const config = require(`${__dirname}/../../config/database.js`)[env];
+const config = require('../config/config.json')[process.env.NODE_ENV || 'development'];
 
-// eslint-disable-next-line prefer-const
-let sequelize = new Sequelize(config.database, config.username, config.password, config);
+const sequelize = new Sequelize(config.database, config.username, config.password, config);
 
 fs
   .readdirSync(__dirname)

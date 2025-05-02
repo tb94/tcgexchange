@@ -137,3 +137,7 @@ dist
 
 # sqlite3
 *.sqlite
+
+# vscode workspace
+.vscode/
+*.code-workspace

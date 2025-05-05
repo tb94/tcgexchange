@@ -1,0 +1,71 @@
+:root {
+    --bg: #f3f4f6;
+    --card-bg: #ffffff;
+    --text: #111827;
+    --highlight: #4f46e5;
+    --button-bg: #4f46e5;
+    --button-hover: #4338ca;
+    --link: #6b7280;
+    --border: #e5e7eb;
+    --input-bg: #fff;
+}
+
+body.dark {
+    --bg: #1f2937;
+    --card-bg: #374151;
+    --text: #f3f4f6;
+    --highlight: #6366f1;
+    --button-bg: #6366f1;
+    --button-hover: #818cf8;
+    --link: #9ca3af;
+    --border: #4b5563;
+    --input-bg: #1f2937;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 2rem;
+    transition: background 0.3s, color 0.3s;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+input[type="text"],
+input,
+select {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+}
+
+button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}

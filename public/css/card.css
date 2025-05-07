@@ -1,0 +1,139 @@
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s;
+    text-align: center;
+}
+
+.card-page {
+    display: grid;
+    grid-template-areas:
+        "media info"
+        "media set"
+        "actions market";
+    grid-template-columns: 400px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.card-media {
+    grid-area: media;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-media img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+/* love this */
+.card-media img:hover {
+    transform: scale(1.05);
+}
+
+.card-info,
+.card-set,
+.card-market,
+.card-actions {
+    background: var(--card-bg);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: var(--border);
+}
+
+.card-info {
+    grid-area: info;
+}
+
+.card-set {
+    grid-area: set;
+}
+
+.card-market {
+    grid-area: market;
+}
+
+.card-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 1rem;
+}
+
+/* button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+} */
+
+/* button:hover {
+    background-color: #0056b3;
+} */
+
+.card-detail-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    background: var(--card-bg, #f9f9f9);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    color: var(--text, #333);
+}
+
+.card-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.card-image {
+    flex: 1 1 300px;
+    max-width: 320px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.card-info {
+    flex: 2 1 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.card-info section {
+    background: var(--card-section-bg, #fff);
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.card-info h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.25rem;
+    color: var(--primary-color, #1b1b1b);
+}

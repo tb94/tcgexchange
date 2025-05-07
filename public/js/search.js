@@ -203,17 +203,11 @@ async function searchCards(page = 1, append = false) {
     loading = true;
 
     try {
-        const res = await fetch('/cards/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                filters: filters,
-                page,
-                pageSize
-            }),
+        const data = await apiRequest('/cards/search', 'POST', {
+            filters: filters,
+            page,
+            pageSize
         });
-
-        const data = await res.json();
 
         if (!data.cards || data.cards.length === 0) {
             if (!append) container.innerHTML = '<p>No cards found.</p>';

@@ -4,25 +4,22 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Search Cards</title>
+    <title>Card Search</title>
+    <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/search.css" />
-    <link rel="stylesheet" href="/css/login.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css" />
 </head>
 
 <body>
-    <div class="search-container">
-        <div class="toggle">
-            <span>🌙 Dark Mode</span>
-            <input type="checkbox" id="themeToggle" />
-            <label for="themeToggle" title="Toggle Dark Mode"></label>
-        </div>
+    <div class="header">
+        <div id="theme" class="toggle"></div>
+        <button id="logout-btn">Log Out</button>
+    </div>
 
-        <h1>Search for Cards</h1>
+    <div class="container">
+        <h1>Card Search</h1>
 
         <form id="search-form">
-            <h2>Basic Filters</h2>
-
             <!-- Card Name -->
             <input type="text" name="name" placeholder="Card name..." />
 
@@ -45,18 +42,6 @@
                     <select multiple name="supertypes" id="supertypes"></select>
                 </div>
             </div>
-
-            <!-- Type -->
-            <!-- <div class="multiselect-group">
-                <label for="types">Types:</label>
-                <select multiple name="types" id="types"></select>
-            </div> -->
-
-            <!-- Supertype -->
-            <!-- <div class="multiselect-group">
-                <label for="supertypes">Supertypes:</label>
-                <select multiple name="supertypes" id="supertypes"></select>
-            </div> -->
 
             <!-- Advanced Filters Toggle -->
             <details class="advanced-filters">
@@ -155,6 +140,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
     <script src="/js/util.js" defer></script>
+    <script src="/js/auth.js" defer></script>
     <script src="/js/search.js"></script>
 </body>
 

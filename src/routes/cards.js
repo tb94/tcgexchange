@@ -6,8 +6,12 @@ const router = express.Router();
 // Card Search Endpoint
 router.post(
   '/search',
-  cardsController.validationRules,
+  cardsController.searchValidation,
   cardsController.searchCards
 );
 
+router.get(
+  '/:id',
+  cardsController.getCardById
+);
 module.exports = router;

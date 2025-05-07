@@ -224,7 +224,7 @@ async function searchCards(page = 1, append = false) {
             <img src="${card.images.large}" alt="${card.name}" />
         </a>
         <h3>${card.name}</h3>
-        <button data-id="${card.id}">Add to Collection</button>`;
+        <button data-id="${card.id}">+ Collection</button>`;
             container.appendChild(cardEl);
 
             requestAnimationFrame(() => {

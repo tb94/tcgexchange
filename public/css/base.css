@@ -37,6 +37,15 @@ h1 {
     margin-bottom: 1.5rem;
 }
 
+label {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    justify-content: center;
+    font-weight: 500;
+    text-wrap: nowrap;
+}
+
 form {
     display: flex;
     flex-direction: column;
@@ -44,7 +53,6 @@ form {
     margin-bottom: 1rem;
 }
 
-input[type="text"],
 input,
 select {
     padding: 0.75rem;
@@ -53,11 +61,25 @@ select {
     border: 1px solid var(--border);
     background: var(--input-bg);
     color: var(--text);
+    transition: border-color 0.2s;
+}
+
+input[type="range"] {
+    accent-color: var(--highlight);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    cursor: pointer;
 }
 
 button {
-    padding: 0.75rem;
+    padding: 0.75rem 1.75rem;
     font-size: 1rem;
+    height: fit-content;
     background-color: var(--button-bg);
     color: white;
     border: none;

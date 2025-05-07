@@ -206,7 +206,8 @@ async function searchCards(page = 1, append = false) {
         const data = await apiRequest('/cards/search', 'POST', {
             filters: filters,
             page,
-            pageSize
+            pageSize,
+            sort: form.sort.value || 'name'
         });
 
         if (!data.cards || data.cards.length === 0) {

@@ -23,7 +23,7 @@
             <h2>Basic Filters</h2>
 
             <!-- Card Name -->
-            <input type="text" name="name" placeholder="Card name..." />
+            <input type="text" name="name" placeholder="Pokemon name..." />
 
             <div class="multiselect-row">
                 <!-- Set Name -->
@@ -38,6 +38,7 @@
                     <label for="types">Types:</label>
                     <select multiple name="types" id="types"></select>
                 </div>
+
                 <!-- Supertype -->
                 <div class="multiselect-group">
                     <label for="supertypes">Supertypes:</label>
@@ -54,6 +55,29 @@
                     <label for="subtypes">Subtypes:</label>
                     <select multiple name="subtypes" id="subtypes"></select>
                 </div> -->
+
+                <div class="multiselect-group">
+                    <label for="sort">Sort By:</label>
+                    <select name="sort" id="sort">
+                        <option value="">-- Select --</option>
+                        <option value="name">Name (A–Z)</option>
+                        <option value="-name">Name (Z–A)</option>
+                        <option value="nationalPokedexNumber">Pokedex Number (Low to High)</option>
+                        <option value="-nationalPokedexNumber">Pokedex Number (High to Low)</option>
+                        <option value="number">Card Number (Low to High)</option>
+                        <option value="-number">Card Number (High to Low)</option>
+                        <option value="set.name">Set Name (A–Z)</option>
+                        <option value="-set.name">Set Name (Z–A)</option>
+                        <option value="set.releaseDate">Release Date (Oldest First)</option>
+                        <option value="-set.releaseDate">Release Date (Newest First)</option>
+                        <option value="hp">HP (Low to High)</option>
+                        <option value="-hp">HP (High to Low)</option>
+                        <option value="convertedRetreatCost">Retreat Cost (Low to High)</option>
+                        <option value="-convertedRetreatCost">Retreat Cost (High to Low)</option>
+                        <option value="convertedAttackCost">Attack Cost (Low to High)</option>
+                        <option value="-convertedAttackCost">Attack Cost (High to Low)</option>
+                    </select>
+                </div>
 
                 <!-- HP Range -->
                 <div class="range-group">
@@ -83,8 +107,8 @@
                     <!-- Pokedex Number -->
                     <input type="text" name="nationalPokedexNumber" placeholder="Pokedex number..." />
 
-                    <!-- Card Number in Set -->
-                    <input type="text" name="cardNumber" placeholder="Card number in set..." />
+                    <!-- Card Number -->
+                    <input type="text" name="cardNumber" placeholder="Card number..." />
 
                     <!-- Level -->
                     <input type="text" name="level" placeholder="Level..." />

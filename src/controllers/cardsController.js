@@ -5,7 +5,7 @@ const axios = require('axios');
 const setConverter = require('../util/setConverter');
 
 // Input validation
-exports.validationRules = [
+exports.searchValidation = [
   body('filters.name').optional().isString().withMessage('name must be a string'),
   body('filters.sets').optional().isArray().withMessage('set must be an array'),
   body('filters.sets.*').optional().isString().withMessage('each set must be a string'),
@@ -189,6 +189,27 @@ exports.searchCards = async (req, res) => {
     return res.json({ cards: response.data.data });
   } catch (err) {
     console.error('Error fetching cards:', err);
+    return res.status(500).json({ error: 'Failed to fetch card data' });
+  }
+};
+
+// Get a card by ID from the external API
+exports.getCardById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // API Request
+    const response = await axios.get(`https://api.pokemontcg.io/v2/cards/${id}`, {
+      headers: { 'X-Api-Key': process.env.POKEMON_TCG_API_KEY }
+    });
+
+    if (response.data.count === 0 && response.data.totalCount === 0) {
+      return res.status(404).json({ error: 'Card not found' });
+    }
+
+    return res.json({ card: response.data.data });
+  } catch (err) {
+    console.error('Error fetching card by ID:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
 };

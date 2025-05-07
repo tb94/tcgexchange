@@ -220,10 +220,11 @@ async function searchCards(page = 1, append = false) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
             cardEl.innerHTML = `
-        <img src="${card.images.large}" alt="${card.name}" />
+        <a href="/card.html?id=${card.id}" class="card-link">
+            <img src="${card.images.large}" alt="${card.name}" />
+        </a>
         <h3>${card.name}</h3>
-        <button data-id="${card.id}">Add to Collection</button>
-      `;
+        <button data-id="${card.id}">Add to Collection</button>`;
             container.appendChild(cardEl);
 
             requestAnimationFrame(() => {

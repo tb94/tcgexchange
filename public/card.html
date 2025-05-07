@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Card Details</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/card.css">
+</head>
+
+<body>
+    <div class="header">
+        <div id="theme" class="toggle"></div>
+        <button id="logout-btn">Log Out</button>
+    </div>
+
+    <div class="container">
+        <main class="card-page">
+            <section class="card-media">
+                <img id="card-image" alt="Card Image" />
+            </section>
+
+            <section class="card-info">
+                <h1 id="card-name">Card Name</h1>
+                <div class="card-attributes">
+                    <p><strong>HP:</strong> <span id="card-hp"></span></p>
+                    <p><strong>Types:</strong> <span id="card-types"></span></p>
+                    <p><strong>Supertype:</strong> <span id="card-supertype"></span></p>
+                    <p><strong>Subtypes:</strong> <span id="card-subtypes"></span></p>
+                    <p><strong>Number:</strong> <span id="card-number"></span></p>
+                </div>
+            </section>
+
+            <section class="card-set">
+                <h2>Set Information</h2>
+                <p><strong>Set:</strong> <span id="set-name"></span></p>
+                <p><strong>Series:</strong> <span id="set-series"></span></p>
+                <p><strong>Rarity:</strong> <span id="card-rarity"></span></p>
+                <p><strong>Release Date:</strong> <span id="set-release-date"></span></p>
+            </section>
+
+            <section class="card-market">
+                <h2>Market Prices</h2>
+                <div id="market-data">
+                    <!-- Price info goes here -->
+                </div>
+            </section>
+
+            <section class="card-actions">
+                <button id="add-to-collection">Add to Collection</button>
+                <button id="add-to-wishlist">Add to Wishlist</button>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/util.js"></script>
+    <script src="/js/card.js"></script>
+</body>
+
+</html>

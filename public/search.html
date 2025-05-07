@@ -11,13 +11,12 @@
 </head>
 
 <body>
-    <div class="search-container">
-        <div class="toggle">
-            <span>🌙 Dark Mode</span>
-            <input type="checkbox" id="themeToggle" />
-            <label for="themeToggle" title="Toggle Dark Mode"></label>
-        </div>
+    <div class="header">
+        <div id="theme" class="toggle"></div>
+        <button id="logout-btn">Log Out</button>
+    </div>
 
+    <div class="search-container">
         <h1>Search for Cards</h1>
 
         <form id="search-form">
@@ -167,6 +166,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
     <script src="/js/util.js" defer></script>
+    <script src="/js/auth.js" defer></script>
     <script src="/js/search.js"></script>
 </body>
 

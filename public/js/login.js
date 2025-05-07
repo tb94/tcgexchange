@@ -16,7 +16,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     const data = await res.json();
     if (!res.ok) {
-        alert(data.error || 'Login failed');
+        return alert(data.error || 'Login failed');
     }
 
     // save the jwt

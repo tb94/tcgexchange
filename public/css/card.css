@@ -70,20 +70,6 @@
     justify-content: space-evenly;
 }
 
-/* button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-} */
-
-/* button:hover {
-    background-color: #0056b3;
-} */
-
 .card-detail-container {
     max-width: 1000px;
     margin: 2rem auto;

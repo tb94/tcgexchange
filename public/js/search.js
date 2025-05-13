@@ -224,6 +224,7 @@ async function searchCards(page = 1, append = false) {
             <img src="${card.images.large}" alt="${card.name}" />
         </a>
         <h3>${card.name}</h3>
+        <small>${card.set.ptcgoCode}: ${card.number}</small>
         <button data-id="${card.id}">+ Collection</button>`;
             container.appendChild(cardEl);
 

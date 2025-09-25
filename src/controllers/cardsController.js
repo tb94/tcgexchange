@@ -213,3 +213,42 @@ exports.getCardById = async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
 };
+
+
+// Add a card to the wishlist
+exports.addToWishlist = async (req, res) => {
+  const { cardId, cardName, imageUrl, supertype, subtype, rarity } = req.body;
+  const userId = req.user?.id;
+
+  // Basic input validation
+  if (!userId || !cardId || !cardName) {
+    return res.status(400).json({ error: 'Missing required fields: userId, cardId, or cardName' });
+  }
+
+  try {
+    // Prevent duplicates
+    const existing = await req.models.Wishlist.findOne({
+      where: { userId, cardId }
+    });
+
+    if (existing) {
+      return res.status(409).json({ message: 'Card already in wishlist' });
+    }
+
+    // Create the wishlist entry
+    const newEntry = await req.models.Wishlist.create({
+      userId,
+      cardId,
+      cardName,
+      imageUrl,
+      supertype,
+      subtype,
+      rarity
+    });
+
+    return res.status(201).json(newEntry);
+  } catch (err) {
+    console.error('Error adding to wishlist:', err);
+    return res.status(500).json({ error: 'Server error while saving to wishlist' });
+  }
+};

@@ -220,13 +220,43 @@ async function searchCards(page = 1, append = false) {
             const cardEl = document.createElement('div');
             cardEl.className = 'card';
             cardEl.innerHTML = `
-        <a href="/card.html?id=${card.id}" class="card-link">
-            <img src="${card.images.large}" alt="${card.name}" />
-        </a>
-        <h3>${card.name}</h3>
-        <small>${card.set.ptcgoCode}: ${card.number}</small>
-        <button data-id="${card.id}">+ Collection</button>`;
+  <a href="/card.html?id=${card.id}" class="card-link">
+      <img src="${card.images.large}" alt="${card.name}" />
+  </a>
+  <h3>${card.name}</h3>
+  <small>${card.set.ptcgoCode}: ${card.number}</small>
+  <button class="add-to-collection" data-id="${card.id}">+ Collection</button>
+  <button class="add-to-wishlist"
+          data-id="${card.id}"
+          data-name="${card.name}"
+          data-image="${card.images.large}"
+          data-supertype="${card.supertype || ''}"
+          data-subtype="${card.subtypes?.[0] || ''}"
+          data-rarity="${card.rarity || ''}">
+    + Wishlist
+  </button>`;
             container.appendChild(cardEl);
+            // Add click listener to the wishlist button
+const wishlistBtn = cardEl.querySelector('.add-to-wishlist');
+if (wishlistBtn) {
+    wishlistBtn.addEventListener('click', async () => {
+        try {
+            const response = await apiRequest('/cards/add-to-wishlist', 'POST', {
+                cardId: wishlistBtn.dataset.id,
+                cardName: wishlistBtn.dataset.name,
+                imageUrl: wishlistBtn.dataset.image,
+                supertype: wishlistBtn.dataset.supertype,
+                subtype: wishlistBtn.dataset.subtype,
+                rarity: wishlistBtn.dataset.rarity
+            });
+
+            alert('Card added to wishlist!');
+        } catch (err) {
+            console.error('Failed to add to wishlist:', err);
+            alert('Failed to add to wishlist. You may need to log in.');
+        }
+    });
+}
 
             requestAnimationFrame(() => {
                 cardEl.classList.add('loaded');

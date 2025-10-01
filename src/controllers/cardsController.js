@@ -1,11 +1,10 @@
-const { validationResult } = require('express-validator');
-const { body } = require('express-validator');
-require('dotenv').config();
-const axios = require('axios');
-const setConverter = require('../util/setConverter');
+import { validationResult, body } from 'express-validator';
+import axios from 'axios';
+import { convertNamesToIds } from '../util/setConverter.js';
+import 'dotenv/config';
 
 // Input validation
-exports.searchValidation = [
+export const searchValidation = [
   body('filters.name').optional().isString().withMessage('name must be a string'),
   body('filters.sets').optional().isArray().withMessage('set must be an array'),
   body('filters.sets.*').optional().isString().withMessage('each set must be a string'),
@@ -60,7 +59,7 @@ function buildQueryString(filters) {
 
   // set: [] `(set.id:base1 OR set.id:base4)`
   if (filters.sets && filters.sets.length > 0) {
-    queryParts.push(`(${setConverter.convertNamesToIds(filters.sets).map((set) => `set.id:${set}`).join(' OR ')})`);
+    queryParts.push(`(${convertNamesToIds(filters.sets).map((set) => `set.id:${set}`).join(' OR ')})`);
   }
 
   // types: [] `(types:grass OR types:fire)`
@@ -156,7 +155,7 @@ function buildQueryString(filters) {
 }
 
 // Search external api for cards
-exports.searchCards = async (req, res) => {
+export async function searchCards(req, res) {
   // Handle validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -191,10 +190,10 @@ exports.searchCards = async (req, res) => {
     console.error('Error fetching cards:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
-};
+}
 
-// Get a card by ID from the external API
-exports.getCardById = async (req, res) => {
+// Get a card by ID from the SDK
+export async function getCardById(req, res) {
   const { id } = req.params;
 
   try {
@@ -212,4 +211,4 @@ exports.getCardById = async (req, res) => {
     console.error('Error fetching card by ID:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
-};
+}

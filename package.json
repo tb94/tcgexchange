@@ -9,6 +9,7 @@
         "lint:fix": "eslint . --fix"
     },
     "author": "Tim Bretz & Kyle LaPointe",
+    "type": "module",
     "license": "ISC",
     "dependencies": {
         "axios": "^1.8.4",

@@ -172,14 +172,6 @@ const setNameToId = Object.entries(sets).reduce((acc, [id, name]) => {
   return acc;
 }, {});
 
-// function getSetIdByName(name) {
-//   return setNameToId[name] || null;
-// }
-
-// function getSetNameById(id) {
-//   return sets[id] || null;
-// }
-
 export function convertNamesToIds(names = []) {
   return names.map((name) => setNameToId[name] || null).filter(Boolean);
 }

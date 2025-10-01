@@ -172,25 +172,10 @@ const setNameToId = Object.entries(sets).reduce((acc, [id, name]) => {
   return acc;
 }, {});
 
-function getSetIdByName(name) {
-  return setNameToId[name] || null;
+export function convertNamesToIds(names = []) {
+  return names.map((name) => setNameToId[name] || null).filter(Boolean);
 }
 
-function getSetNameById(id) {
-  return sets[id] || null;
+export function convertIdsToNames(ids = []) {
+  return ids.map((id) => sets[id] || null).filter(Boolean);
 }
-
-function convertNamesToIds(names = []) {
-  return names.map(getSetIdByName).filter(Boolean);
-}
-
-function convertIdsToNames(ids = []) {
-  return ids.map(getSetNameById).filter(Boolean);
-}
-
-module.exports = {
-  getSetIdByName,
-  getSetNameById,
-  convertNamesToIds,
-  convertIdsToNames
-};

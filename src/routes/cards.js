@@ -1,17 +1,18 @@
-const express = require('express');
-const cardsController = require('../controllers/cardsController');
+import express from 'express';
+import { searchValidation, searchCards, getCardById } from '../controllers/cardsController.js';
 
 const router = express.Router();
 
 // Card Search Endpoint
 router.post(
   '/search',
-  cardsController.searchValidation,
-  cardsController.searchCards
+  searchValidation,
+  searchCards
 );
 
 router.get(
   '/:id',
-  cardsController.getCardById
+  getCardById
 );
-module.exports = router;
+
+export default router;

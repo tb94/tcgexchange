@@ -1,11 +1,12 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { User } = require('../../models');
+import { hash, compare } from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import * as models from '../../models/index.js';
 
+const { User } = models.default;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // User Signup
-exports.signup = async (req, res) => {
+export async function signup(req, res) {
   try {
     const { username, password } = req.body;
 
@@ -13,7 +14,7 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hash(password, 10);
 
     // look for existing user,
     // if a user does not exist `created` will be true and the new user instance will be returned
@@ -34,10 +35,10 @@ exports.signup = async (req, res) => {
     console.error('Signup error:', error);
     return res.status(500).json({ error: error.message });
   }
-};
+}
 
 // User Login
-exports.login = async (req, res) => {
+export async function login(req, res) {
   try {
     const { username, password } = req.body;
 
@@ -46,7 +47,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
@@ -57,15 +58,15 @@ exports.login = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-};
+}
 
 // Token Validation
-exports.validate = async (req, res) => {
+export async function validate(req, res) {
   res.sendStatus(200); // Token is valid if it passes auth middleware
-};
+}
 
 // Get Current User
-exports.getCurrentUser = async (req, res) => {
+export async function getCurrentUser(req, res) {
   try {
     const user = await User.findByPk(req.user.userId, {
       attributes: ['id', 'username']
@@ -77,4 +78,4 @@ exports.getCurrentUser = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
-};
+}

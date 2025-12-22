@@ -11,6 +11,7 @@
 ├── README.md
 ├── config
 │   └── config.json
+├── dev.sqlite
 ├── docker-compose.yml
 ├── migrations
 │   ├── 20250331052746-create-user.js
@@ -58,7 +59,7 @@
     └── util
         └── setConverter.js
 
-16 directories, 43 files
+16 directories, 44 files
 
 
 ===== FILE CONTENTS (source only) =====
@@ -7641,13 +7642,15 @@ module.exports = (req, res, next) => {
 
 ===== ./src/middlewares/authMiddleware.js =====
 
-// src/middleware/authMiddleware.js
-
 function authMiddleware(req, res, next) {
+  console.log('🔒 Checking auth:', req.session);
+
   if (req.session && req.session.user) {
-    return next(); // user is authenticated, continue
+    console.log('✅ Authenticated as:', req.session.user);
+    return next();
   }
 
+  console.log('❌ Not authenticated.');
   return res.status(401).json({ error: 'Unauthorized. Please log in.' });
 }
 
@@ -7857,10 +7860,9 @@ module.exports = {
 ===== ./src/routes/cards.js =====
 
 const express = require('express');
+const router = express.Router();
 const cardsController = require('../controllers/cardsController');
 const authMiddleware = require('../middlewares/authMiddleware');
-
-const router = express.Router();
 
 // Card Search Endpoint
 router.post(

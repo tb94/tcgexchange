@@ -218,7 +218,11 @@ exports.getCardById = async (req, res) => {
 // Add a card to the wishlist
 exports.addToWishlist = async (req, res) => {
   const { cardId, cardName, imageUrl, supertype, subtype, rarity } = req.body;
-  const userId = req.user?.id;
+  const userId = req.user?.userId;
+
+   console.log('userId:', userId);
+   console.log('cardId:', cardId);
+   console.log('cardName:', cardName);
 
   // Basic input validation
   if (!userId || !cardId || !cardName) {

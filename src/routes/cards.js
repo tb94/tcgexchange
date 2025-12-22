@@ -1,8 +1,8 @@
 const express = require('express');
-const cardsController = require('../controllers/cardsController');
-const authMiddleware = require('../middlewares/authMiddleware');
-
 const router = express.Router();
+const cardsController = require('../controllers/cardsController');
+const authMiddleware = require('../middlewares/auth'); // use JWT version
+
 
 // Card Search Endpoint
 router.post(

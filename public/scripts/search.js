@@ -241,13 +241,15 @@ const wishlistBtn = cardEl.querySelector('.add-to-wishlist');
 if (wishlistBtn) {
     wishlistBtn.addEventListener('click', async () => {
         try {
-            const response = await apiRequest('/cards/add-to-wishlist', 'POST', {
+            const response = await axios.post('/cards/add-to-wishlist', {
                 cardId: wishlistBtn.dataset.id,
                 cardName: wishlistBtn.dataset.name,
                 imageUrl: wishlistBtn.dataset.image,
                 supertype: wishlistBtn.dataset.supertype,
                 subtype: wishlistBtn.dataset.subtype,
                 rarity: wishlistBtn.dataset.rarity
+            }, {
+                withCredentials: true // ✅ sends session cookie
             });
 
             alert('Card added to wishlist!');

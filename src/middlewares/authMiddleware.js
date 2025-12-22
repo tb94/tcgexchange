@@ -1,10 +1,12 @@
-// src/middleware/authMiddleware.js
-
 function authMiddleware(req, res, next) {
+  console.log('🔒 Checking auth:', req.session);
+
   if (req.session && req.session.user) {
-    return next(); // user is authenticated, continue
+    console.log('✅ Authenticated as:', req.session.user);
+    return next();
   }
 
+  console.log('❌ Not authenticated.');
   return res.status(401).json({ error: 'Unauthorized. Please log in.' });
 }
 

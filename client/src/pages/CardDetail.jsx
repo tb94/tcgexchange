@@ -2,17 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiRequest } from '../api';
 
-function collectrUrl(card) {
-  const printedTotal = card?.set?.printedTotal;
-  const number = card?.number;
-  const q = [card?.name, number && printedTotal ? `${number}/${printedTotal}` : null, card?.set?.name]
-    .filter(Boolean)
-    .join(' ');
-
-  // Best-effort: Collectr changes URLs; using a search query is the most stable.
-  return `https://app.getcollectr.com/search?query=${encodeURIComponent(q)}`;
-}
-
 export default function CardDetail() {
   const { id } = useParams();
   const [card, setCard] = useState(null);
@@ -117,15 +106,6 @@ export default function CardDetail() {
                   {card.supertype && <span className="badge">{card.supertype}</span>}
                   {card.rarity && <span className="badge">{card.rarity}</span>}
                   {Array.isArray(card.types) && card.types.map((t) => <span key={t} className="badge">{t}</span>)}
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <a className="btn btn-primary" href={collectrUrl(card)} target="_blank" rel="noreferrer">
-                    Open in Collectr
-                  </a>
-                  <a className="btn btn-ghost" href={`/card.html?id=${encodeURIComponent(id)}`} target="_blank" rel="noreferrer">
-                    Open legacy detail
-                  </a>
                 </div>
               </div>
 

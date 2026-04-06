@@ -110,25 +110,6 @@ export default function CardDetail() {
               </div>
 
               <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
-                <div className="font-bold">Add to collection</div>
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Condition</label>
-                    <select className="input mt-1" value={condition} onChange={(e) => setCondition(e.target.value)}>
-                      {['NM', 'LP', 'MP', 'HP', 'DMG'].map((c) => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Quantity</label>
-                    <input className="input mt-1" type="number" min="1" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
-                  </div>
-                </div>
-                <button className="btn btn-primary mt-3" onClick={() => addToCollection().catch((e) => alert(e.message))}>
-                  Add
-                </button>
-              </div>
-
-              <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
                 <div className="font-bold">Add to wishlist</div>
                 <div className="mt-2 grid gap-2 md:grid-cols-2">
                   <div>
@@ -152,6 +133,25 @@ export default function CardDetail() {
                 </div>
 
                 <button className="btn btn-primary mt-3" onClick={() => addToWishlist().catch((e) => alert(e.message))}>
+                  Add
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+                <div className="font-bold">Add to collection</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Condition</label>
+                    <select className="input mt-1" value={condition} onChange={(e) => setCondition(e.target.value)}>
+                      {['NM', 'LP', 'MP', 'HP', 'DMG'].map((c) => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Quantity</label>
+                    <input className="input mt-1" type="number" min="1" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
+                  </div>
+                </div>
+                <button className="btn btn-primary mt-3" onClick={() => addToCollection().catch((e) => alert(e.message))}>
                   Add
                 </button>
               </div>

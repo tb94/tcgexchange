@@ -1,5 +1,43 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+function WishlistTile({ item, card }) {
+  const title = card?.name || item.cardId;
+  const subtitle = [card?.set ? String(card.set) : null, card?.number ? `#${card.number}` : null]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <Link
+      to={`/app/cards/${encodeURIComponent(item.cardId)}`}
+      className="group rounded-2xl border border-slate-900/10 bg-white/70 p-3 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+    >
+      <div className="flex gap-3">
+        {card?.images?.small ? (
+          <img
+            src={card.images.small}
+            alt={title}
+            style={{ height: 'var(--card-thumb-h)', width: 'var(--card-thumb-w)' }}
+            className="rounded-lg object-cover ring-1 ring-black/5 dark:ring-white/10"
+            loading="lazy"
+          />
+        ) : (
+          <div style={{ height: 'var(--card-thumb-h)', width: 'var(--card-thumb-w)' }} className="rounded-lg bg-black/5 dark:bg-white/5" />
+        )}
+        <div className="min-w-0">
+          <div className="truncate font-bold group-hover:underline">{title}</div>
+          {subtitle && <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">{subtitle}</div>}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="badge">Want x{item.quantityDesired}</span>
+            <span className="badge">P{item.priority}</span>
+            {item.minCondition && <span className="badge">Min {item.minCondition}</span>}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 import { apiRequest } from '../api';
 import { useCardsByIds } from '../hooks/useCardsByIds';
 
@@ -92,8 +130,14 @@ export default function Wishlist() {
   const [newMinCondition, setNewMinCondition] = useState('LP');
   const [newNotes, setNewNotes] = useState('');
 
+  const [view, setView] = useState(() => localStorage.getItem('wishlistView') || 'list');
+
   const cardIds = useMemo(() => items.map((i) => i.cardId), [items]);
   const { cardsById } = useCardsByIds(cardIds);
+
+  useEffect(() => {
+    localStorage.setItem('wishlistView', view);
+  }, [view]);
 
   // Reset chunking when list changes
   useEffect(() => {
@@ -171,7 +215,23 @@ export default function Wishlist() {
             <div className="text-lg font-bold">Your wishlist</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">Uses <span className="font-mono">/wishlist</span></div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex overflow-hidden rounded-xl border border-slate-900/10 bg-white/60 dark:border-white/10 dark:bg-white/5">
+              <button
+                type="button"
+                className={`px-3 py-2 text-sm font-semibold ${view === 'list' ? 'bg-black/5 dark:bg-white/10' : ''}`}
+                onClick={() => setView('list')}
+              >
+                List
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 text-sm font-semibold ${view === 'grid' ? 'bg-black/5 dark:bg-white/10' : ''}`}
+                onClick={() => setView('grid')}
+              >
+                Grid
+              </button>
+            </div>
             <Link className="btn btn-ghost" to="/app/search">Find cards</Link>
             <button className="btn btn-primary" onClick={load} disabled={loading}>Refresh</button>
           </div>
@@ -214,17 +274,25 @@ export default function Wishlist() {
 
       {loading && <div className="card text-slate-600 dark:text-slate-400">Loading…</div>}
 
-      <div className="grid gap-3">
-        {items.slice(0, visibleCount).map((it) => (
-          <Row
-            key={it.id}
-            item={it}
-            card={cardsById[it.cardId]}
-            onUpdate={update}
-            onDelete={remove}
-          />
-        ))}
-      </div>
+      {view === 'list' ? (
+        <div className="grid gap-3">
+          {items.slice(0, visibleCount).map((it) => (
+            <Row
+              key={it.id}
+              item={it}
+              card={cardsById[it.cardId]}
+              onUpdate={update}
+              onDelete={remove}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="card-grid">
+          {items.slice(0, visibleCount).map((it) => (
+            <WishlistTile key={it.id} item={it} card={cardsById[it.cardId]} />
+          ))}
+        </div>
+      )}
 
       <div ref={sentinelRef} />
 

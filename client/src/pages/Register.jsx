@@ -25,7 +25,7 @@ export default function Register() {
           try {
             const data = await apiRequest('/auth/signup', { method: 'POST', body: { username, password } });
             setToken(data.token);
-            nav('/app/trades');
+            nav('/app/search');
           } catch (e2) {
             setErr(e2.message);
           } finally {

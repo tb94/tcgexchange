@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
 
@@ -32,7 +32,8 @@ export default function Search() {
   const [sets, setSets] = useState([]);
   const [loadingSets, setLoadingSets] = useState(true);
 
-  const [name, setName] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [nameQuery, setNameQuery] = useState('');
   const [setId, setSetId] = useState('');
   const [rarity, setRarity] = useState('');
   const [supertype, setSupertype] = useState('');
@@ -43,17 +44,29 @@ export default function Search() {
 
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [err, setErr] = useState('');
+
+  const sentinelRef = useRef(null);
+
+  // Debounce name input to avoid hammering the API while typing.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setNameQuery(nameInput.trim());
+    }, 800);
+    return () => clearTimeout(t);
+  }, [nameInput]);
 
   const filters = useMemo(() => {
     const f = {};
-    if (name.trim()) f.name = name.trim();
+    if (nameQuery) f.name = nameQuery;
     if (setId) f.sets = [setId];
     if (rarity) f.rarities = [rarity];
     if (supertype) f.supertypes = [supertype];
     if (type) f.types = [type];
     return f;
-  }, [name, rarity, setId, supertype, type]);
+  }, [nameQuery, rarity, setId, supertype, type]);
 
   async function loadSets() {
     setLoadingSets(true);
@@ -65,8 +78,10 @@ export default function Search() {
     }
   }
 
-  async function search(goToPage = 1) {
-    setLoading(true);
+  async function search(goToPage = 1, { append = false } = {}) {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+
     setErr('');
     try {
       const res = await apiRequest('/cards/search_local', {
@@ -78,21 +93,58 @@ export default function Search() {
           pageSize,
         },
       });
-      setCards(res.cards || []);
+
+      const next = res.cards || [];
+      setCards((prev) => (append ? [...prev, ...next] : next));
       setPage(goToPage);
+      setHasMore(next.length >= pageSize);
     } catch (e) {
       setErr(e.message);
+      setHasMore(false);
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
   }
 
   useEffect(() => {
     loadSets().catch(() => {});
     // initial search
-    search(1).catch(() => {});
+    search(1, { append: false }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When filters change, reset and fetch page 1.
+  useEffect(() => {
+    // avoid running before initial mount has done its first search
+    // (safe because calling search(1) twice just refreshes)
+    setCards([]);
+    setPage(1);
+    setHasMore(true);
+    search(1, { append: false }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  // Infinite scroll: when sentinel enters view, load next page.
+  useEffect(() => {
+    if (!sentinelRef.current) return undefined;
+
+    const el = sentinelRef.current;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry.isIntersecting) return;
+        if (loading || loadingMore) return;
+        if (!hasMore) return;
+        if (err) return;
+        search(page + 1, { append: true }).catch(() => {});
+      },
+      { root: null, rootMargin: '400px 0px', threshold: 0 }
+    );
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [err, hasMore, loading, loadingMore, page]);
 
   return (
     <div className="grid gap-4">
@@ -100,7 +152,11 @@ export default function Search() {
         className="card"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!loading) search(1);
+          if (loading) return;
+          // Force immediate search using the current input (no debounce delay)
+          const next = nameInput.trim();
+          setNameQuery(next);
+          search(1, { append: false }).catch(() => {});
         }}
       >
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -120,7 +176,7 @@ export default function Search() {
         <div className="mt-4 grid gap-3 md:grid-cols-5">
           <div className="md:col-span-2">
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Name</label>
-            <input className="input mt-1" value={name} onChange={(e) => setName(e.target.value)} placeholder="Pikachu" />
+            <input className="input mt-1" value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Pikachu" />
           </div>
 
           <div>
@@ -176,7 +232,8 @@ export default function Search() {
             className="btn btn-ghost"
             type="button"
             onClick={() => {
-              setName('');
+              setNameInput('');
+              setNameQuery('');
               setSetId('');
               setRarity('');
               setSupertype('');
@@ -186,14 +243,8 @@ export default function Search() {
             Clear
           </button>
 
-          <div className="flex items-center gap-2">
-            <button className="btn btn-ghost" type="button" disabled={loading || page <= 1} onClick={() => search(page - 1)}>
-              Prev
-            </button>
-            <div className="text-slate-600 dark:text-slate-400">Page {page}</div>
-            <button className="btn btn-ghost" type="button" disabled={loading || cards.length < pageSize} onClick={() => search(page + 1)}>
-              Next
-            </button>
+          <div className="text-slate-600 dark:text-slate-400">
+            {cards.length ? `${cards.length} loaded` : ''}
           </div>
         </div>
       </form>
@@ -204,8 +255,19 @@ export default function Search() {
         ))}
       </div>
 
-      {!loading && !cards.length && (
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} />
+
+      {(loadingMore || loading) && (
+        <div className="card text-sm text-slate-600 dark:text-slate-400">Loading…</div>
+      )}
+
+      {!loading && !loadingMore && !cards.length && (
         <div className="card text-sm text-slate-600 dark:text-slate-400">No results.</div>
+      )}
+
+      {!loading && !loadingMore && cards.length > 0 && !hasMore && (
+        <div className="card text-sm text-slate-600 dark:text-slate-400">End of results.</div>
       )}
     </div>
   );

@@ -27,13 +27,13 @@ export default function Layout() {
   return (
     <div className="mx-auto max-w-6xl p-6">
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
+        <Link to="/app/search" className="flex items-center gap-3" title="Home">
           <div className="h-10 w-10 rounded-2xl border border-slate-900/10 bg-white/60 dark:border-white/10 dark:bg-white/5" />
           <div>
             <div className="text-xl font-extrabold tracking-tight">TCG Exchange</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">React rewrite POC</div>
           </div>
-        </div>
+        </Link>
 
         <div className="flex flex-wrap items-center gap-2">
           <NavItem to="/app/search">Search</NavItem>

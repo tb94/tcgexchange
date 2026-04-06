@@ -11,7 +11,14 @@ const db = {};
 // eslint-disable-next-line import/no-dynamic-require
 const config = require('../config/config.json')[process.env.NODE_ENV || 'development'];
 
-const sequelize = new Sequelize(config.database, config.username, config.password, config);
+// Ensure sqlite storage path is stable regardless of process cwd.
+// config.storage is relative in config/config.json; resolve it relative to repo root.
+const resolvedConfig = { ...config };
+if (resolvedConfig.dialect === 'sqlite' && resolvedConfig.storage && !path.isAbsolute(resolvedConfig.storage)) {
+  resolvedConfig.storage = path.resolve(__dirname, '..', resolvedConfig.storage);
+}
+
+const sequelize = new Sequelize(resolvedConfig.database, resolvedConfig.username, resolvedConfig.password, resolvedConfig);
 
 fs
   .readdirSync(__dirname)

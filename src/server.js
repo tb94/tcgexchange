@@ -14,9 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Static assets (legacy)
-app.use(express.static(path.join(__dirname, '..', 'public')));
-app.use(express.static(path.join(__dirname, '..', 'public', 'views')));
+// Legacy static HTML pages are disabled; we serve only the React app + APIs.
 
 // React rewrite POC build (Vite)
 const reactDist = path.join(__dirname, '..', 'client', 'dist');
@@ -28,8 +26,8 @@ app.use('/cards', cardRoutes);
 app.use('/collection', collectionRoutes);
 app.use('/wishlist', wishlistRoutes);
 
-// SPA fallback for React routes
-app.get(['/app', '/app/*'], (req, res) => {
+// SPA fallback for React routes (make React the default UI)
+app.get(['/', '/app', '/app/*'], (req, res) => {
   res.sendFile(path.join(reactDist, 'index.html'));
 });
 

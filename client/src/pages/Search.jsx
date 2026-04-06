@@ -96,7 +96,13 @@ export default function Search() {
 
   return (
     <div className="grid gap-4">
-      <div className="card">
+      <form
+        className="card"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!loading) search(1);
+        }}
+      >
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="text-lg font-bold">Search cards (local)</div>
@@ -104,7 +110,7 @@ export default function Search() {
               Uses <span className="font-mono">/cards/search_local</span> + <span className="font-mono">/cards/sets_local</span>
             </div>
           </div>
-          <button className="btn btn-primary" onClick={() => search(1)} disabled={loading}>
+          <button className="btn btn-primary" type="submit" disabled={loading}>
             {loading ? 'Searching…' : 'Search'}
           </button>
         </div>
@@ -166,25 +172,31 @@ export default function Search() {
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-          <button className="btn btn-ghost" onClick={() => {
-            setName('');
-            setSetId('');
-            setRarity('');
-            setSupertype('');
-            setType('');
-          }}>Clear</button>
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={() => {
+              setName('');
+              setSetId('');
+              setRarity('');
+              setSupertype('');
+              setType('');
+            }}
+          >
+            Clear
+          </button>
 
           <div className="flex items-center gap-2">
-            <button className="btn btn-ghost" disabled={loading || page <= 1} onClick={() => search(page - 1)}>
+            <button className="btn btn-ghost" type="button" disabled={loading || page <= 1} onClick={() => search(page - 1)}>
               Prev
             </button>
             <div className="text-slate-600 dark:text-slate-400">Page {page}</div>
-            <button className="btn btn-ghost" disabled={loading || cards.length < pageSize} onClick={() => search(page + 1)}>
+            <button className="btn btn-ghost" type="button" disabled={loading || cards.length < pageSize} onClick={() => search(page + 1)}>
               Next
             </button>
           </div>
         </div>
-      </div>
+      </form>
 
       <div className="card-grid">
         {cards.map((c) => (

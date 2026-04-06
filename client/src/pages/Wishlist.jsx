@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
 import { useCardsByIds } from '../hooks/useCardsByIds';
@@ -82,6 +82,10 @@ export default function Wishlist() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
 
+  const CHUNK = 25;
+  const [visibleCount, setVisibleCount] = useState(CHUNK);
+  const sentinelRef = useRef(null);
+
   const [newCardId, setNewCardId] = useState('');
   const [newQty, setNewQty] = useState(1);
   const [newPriority, setNewPriority] = useState(3);
@@ -90,6 +94,27 @@ export default function Wishlist() {
 
   const cardIds = useMemo(() => items.map((i) => i.cardId), [items]);
   const { cardsById } = useCardsByIds(cardIds);
+
+  // Reset chunking when list changes
+  useEffect(() => {
+    setVisibleCount(CHUNK);
+  }, [items.length]);
+
+  // Infinite scroll sentinel for client-side chunking
+  useEffect(() => {
+    if (!sentinelRef.current) return undefined;
+    const el = sentinelRef.current;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry.isIntersecting) return;
+        setVisibleCount((v) => Math.min(items.length, v + CHUNK));
+      },
+      { root: null, rootMargin: '400px 0px', threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [items.length]);
 
   async function load() {
     setLoading(true);
@@ -190,7 +215,7 @@ export default function Wishlist() {
       {loading && <div className="card text-slate-600 dark:text-slate-400">Loading…</div>}
 
       <div className="grid gap-3">
-        {items.map((it) => (
+        {items.slice(0, visibleCount).map((it) => (
           <Row
             key={it.id}
             item={it}
@@ -200,6 +225,8 @@ export default function Wishlist() {
           />
         ))}
       </div>
+
+      <div ref={sentinelRef} />
 
       {!loading && !items.length && (
         <div className="card text-sm text-slate-600 dark:text-slate-400">Your wishlist is empty.</div>

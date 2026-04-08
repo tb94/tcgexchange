@@ -223,6 +223,16 @@ export default function Collection() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
 
+  const [sets, setSets] = useState([]);
+  const [loadingSets, setLoadingSets] = useState(true);
+
+  const [nameInput, setNameInput] = useState('');
+  const [nameQuery, setNameQuery] = useState('');
+  const [setId, setSetId] = useState('');
+  const [rarity, setRarity] = useState('');
+  const [supertype, setSupertype] = useState('');
+  const [type, setType] = useState('');
+
   const [editItem, setEditItem] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editErr, setEditErr] = useState('');
@@ -259,6 +269,41 @@ export default function Collection() {
   const cardIds = useMemo(() => items.map((i) => i.cardId), [items]);
   const { cardsById } = useCardsByIds(cardIds);
 
+  // Debounce name input like Search page.
+  useEffect(() => {
+    const t = setTimeout(() => setNameQuery(nameInput.trim()), 800);
+    return () => clearTimeout(t);
+  }, [nameInput]);
+
+  async function loadSets() {
+    setLoadingSets(true);
+    try {
+      const res = await apiRequest('/cards/sets_local');
+      setSets(res.sets || []);
+    } finally {
+      setLoadingSets(false);
+    }
+  }
+
+  const filteredItems = useMemo(() => {
+    const nq = nameQuery.toLowerCase();
+    return (items || []).filter((it) => {
+      const card = cardsById[it.cardId];
+      // If a filter is set but we don't have card data yet, exclude to avoid false positives.
+      if ((nameQuery || setId || rarity || supertype || type) && !card) return false;
+
+      if (nq && !String(card?.name || '').toLowerCase().includes(nq)) return false;
+      if (setId && card?.set?.id !== setId) return false;
+      if (rarity && card?.rarity !== rarity) return false;
+      if (supertype && card?.supertype !== supertype) return false;
+      if (type) {
+        const types = card?.types || [];
+        if (!Array.isArray(types) || !types.includes(type)) return false;
+      }
+      return true;
+    });
+  }, [items, cardsById, nameQuery, setId, rarity, supertype, type]);
+
   function toggleSelected(id) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -270,12 +315,12 @@ export default function Collection() {
 
   const selectedCount = selectedIds.size;
 
-  // Reset chunking + selection when list changes
+  // Reset chunking + selection when list or filters change
   useEffect(() => {
     setVisibleCount(CHUNK);
     setSelectMode(false);
     setSelectedIds(new Set());
-  }, [items.length]);
+  }, [items.length, nameQuery, setId, rarity, supertype, type]);
 
   // Infinite scroll sentinel for client-side chunking
   useEffect(() => {
@@ -285,13 +330,13 @@ export default function Collection() {
       (entries) => {
         const [entry] = entries;
         if (!entry.isIntersecting) return;
-        setVisibleCount((v) => Math.min(items.length, v + CHUNK));
+        setVisibleCount((v) => Math.min(filteredItems.length, v + CHUNK));
       },
       { root: null, rootMargin: '400px 0px', threshold: 0 }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [items.length]);
+  }, [filteredItems.length]);
 
   async function load() {
     setLoading(true);
@@ -402,6 +447,7 @@ export default function Collection() {
 
   useEffect(() => {
     load();
+    loadSets().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -464,6 +510,81 @@ export default function Collection() {
 
         {err && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{err}</div>}
 
+        <div className="mt-4 grid gap-3 md:grid-cols-5">
+          <div className="md:col-span-2">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Name</label>
+            <input className="input mt-1" value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Pikachu" />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Set</label>
+            <select className="input mt-1" value={setId} onChange={(e) => setSetId(e.target.value)} disabled={loadingSets}>
+              <option value="">Any</option>
+              {sets.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.id})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Rarity</label>
+            <select className="input mt-1" value={rarity} onChange={(e) => setRarity(e.target.value)}>
+              <option value="">Any</option>
+              <option>Common</option>
+              <option>Uncommon</option>
+              <option>Rare</option>
+              <option>Rare Holo</option>
+              <option>Double Rare</option>
+              <option>Illustration Rare</option>
+              <option>Special Illustration Rare</option>
+              <option>Hyper Rare</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Supertype</label>
+            <select className="input mt-1" value={supertype} onChange={(e) => setSupertype(e.target.value)}>
+              <option value="">Any</option>
+              <option>Pokémon</option>
+              <option>Trainer</option>
+              <option>Energy</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Type</label>
+            <select className="input mt-1" value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="">Any</option>
+              {['Colorless', 'Darkness', 'Dragon', 'Fairy', 'Fighting', 'Fire', 'Grass', 'Lightning', 'Metal', 'Psychic', 'Water'].map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={() => {
+              setNameInput('');
+              setNameQuery('');
+              setSetId('');
+              setRarity('');
+              setSupertype('');
+              setType('');
+            }}
+          >
+            Clear
+          </button>
+
+          <div className="text-slate-600 dark:text-slate-400">
+            {filteredItems.length ? `${filteredItems.length} shown` : ''}
+          </div>
+        </div>
+
         <div className="mt-4 rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
           <div className="font-bold">Add item</div>
           <div className="mt-2 grid gap-2 md:grid-cols-6">
@@ -496,7 +617,7 @@ export default function Collection() {
 
       {view === 'list' ? (
         <div className="grid gap-3">
-          {items.slice(0, visibleCount).map((it) => (
+          {filteredItems.slice(0, visibleCount).map((it) => (
             <ItemRow
               key={it.id}
               item={it}
@@ -525,7 +646,7 @@ export default function Collection() {
             className="card-grid"
             style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
           >
-            {items.slice(0, visibleCount).map((it) => (
+            {filteredItems.slice(0, visibleCount).map((it) => (
               <CollectionTile
                 key={it.id}
                 item={it}

@@ -6,6 +6,8 @@ function WishlistTile({ item, card, selectMode, selected, onToggleSelected }) {
   const subtitle = [card?.set ? String(card.set) : null, card?.number ? `#${card.number}` : null]
     .filter(Boolean)
     .join(' ');
+  const [showNote, setShowNote] = useState(false);
+  const hasNote = Boolean(item.notes && String(item.notes).trim());
 
   return (
     <div className="relative">
@@ -51,6 +53,28 @@ function WishlistTile({ item, card, selectMode, selected, onToggleSelected }) {
             <span className="badge">P{item.priority}</span>
             {item.minCondition && <span className="badge">Min {item.minCondition}</span>}
           </div>
+
+          {hasNote && (
+            <div className="mt-2">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowNote((v) => !v);
+                }}
+              >
+                {showNote ? 'Hide note' : 'Show note'}
+              </button>
+
+              {showNote && (
+                <div className="mt-2 whitespace-pre-wrap rounded-xl border border-slate-900/10 bg-white/60 p-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                  {String(item.notes).trim()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Link>
@@ -69,12 +93,15 @@ function Row({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSel
   const [priority, setPriority] = useState(item.priority);
   const [minCondition, setMinCondition] = useState(item.minCondition);
   const [notes, setNotes] = useState(item.notes || '');
+  const [showNote, setShowNote] = useState(false);
+  const hasNote = Boolean(item.notes && String(item.notes).trim());
 
   useEffect(() => {
     setQty(item.quantityDesired);
     setPriority(item.priority);
     setMinCondition(item.minCondition);
     setNotes(item.notes || '');
+    setShowNote(false);
   }, [item]);
 
   return (
@@ -149,6 +176,24 @@ function Row({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSel
           <input className="input mt-1" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
         </div>
       </div>
+
+      {hasNote && (
+        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setShowNote((v) => !v)}
+          >
+            {showNote ? 'Hide note' : 'Show note'}
+          </button>
+
+          {showNote && (
+            <div className="mt-2 whitespace-pre-wrap rounded-xl border border-slate-900/10 bg-white/60 p-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+              {String(item.notes).trim()}
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <button

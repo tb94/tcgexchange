@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
 import { useCardsByIds } from '../hooks/useCardsByIds';
 
-function ItemRow({ item, card, onUpdate, onDelete }) {
+function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSelected }) {
   const [qty, setQty] = useState(item.quantity);
   const [condition, setCondition] = useState(item.condition);
 
@@ -13,7 +13,31 @@ function ItemRow({ item, card, onUpdate, onDelete }) {
   }, [item.condition, item.quantity]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-900/10 bg-white/70 p-3 dark:border-white/10 dark:bg-white/5 md:flex-row md:items-center md:justify-between">
+    <div
+      className={
+        `relative flex flex-col gap-3 rounded-2xl border bg-white/70 p-3 dark:bg-white/5 md:flex-row md:items-center md:justify-between ` +
+        (selected ? 'border-neonCyan/60 ring-4 ring-neonCyan/10' : 'border-slate-900/10 dark:border-white/10')
+      }
+      onClick={() => {
+        if (!selectMode) return;
+        onToggleSelected(item.id);
+      }}
+      role={selectMode ? 'button' : undefined}
+      tabIndex={selectMode ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (!selectMode) return;
+        if (e.key === 'Enter' || e.key === ' ') onToggleSelected(item.id);
+      }}
+    >
+      {selectMode && (
+        <label
+          className="absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/80 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/80"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input type="checkbox" checked={selected} onChange={() => onToggleSelected(item.id)} />
+          Select
+        </label>
+      )}
       <div className="flex min-w-0 items-center gap-3">
         {card?.images?.small ? (
           <img
@@ -47,11 +71,11 @@ function ItemRow({ item, card, onUpdate, onDelete }) {
           <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Qty</label>
           <input className="input mt-1" type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} />
         </div>
-        <div className="flex gap-2">
-          <button className="btn btn-primary" onClick={() => onUpdate({ id: item.id, quantity: Number(qty), condition }).catch((e) => alert(e.message))}>
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <button className="btn btn-primary" type="button" onClick={() => onUpdate({ id: item.id, quantity: Number(qty), condition }).catch((e) => alert(e.message))}>
             Save
           </button>
-          <button className="btn btn-ghost" onClick={() => onDelete(item.id).catch((e) => alert(e.message))}>
+          <button className="btn btn-ghost" type="button" onClick={() => onDelete(item.id).catch((e) => alert(e.message))}>
             Delete
           </button>
         </div>
@@ -69,6 +93,13 @@ export default function Collection() {
   const [visibleCount, setVisibleCount] = useState(CHUNK);
   const sentinelRef = useRef(null);
 
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkErr, setBulkErr] = useState('');
+  const [bulkRows, setBulkRows] = useState([]);
+
   const [newCardId, setNewCardId] = useState('');
   const [newQty, setNewQty] = useState(1);
   const [newCondition, setNewCondition] = useState('NM');
@@ -76,9 +107,22 @@ export default function Collection() {
   const cardIds = useMemo(() => items.map((i) => i.cardId), [items]);
   const { cardsById } = useCardsByIds(cardIds);
 
-  // Reset chunking when list changes
+  function toggleSelected(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const selectedCount = selectedIds.size;
+
+  // Reset chunking + selection when list changes
   useEffect(() => {
     setVisibleCount(CHUNK);
+    setSelectMode(false);
+    setSelectedIds(new Set());
   }, [items.length]);
 
   // Infinite scroll sentinel for client-side chunking
@@ -131,6 +175,72 @@ export default function Collection() {
     await load();
   }
 
+  function openBulkEdit() {
+    const ids = Array.from(selectedIds);
+    const rows = items
+      .filter((it) => ids.includes(it.id))
+      .map((it) => ({
+        id: it.id,
+        cardId: it.cardId,
+        quantity: it.quantity,
+        condition: it.condition
+      }));
+
+    setBulkRows(rows);
+    setBulkErr('');
+    setBulkOpen(true);
+  }
+
+  function closeBulk() {
+    setBulkOpen(false);
+    setBulkErr('');
+    setBulkLoading(false);
+    setBulkRows([]);
+  }
+
+  async function confirmBulkSave() {
+    setBulkErr('');
+    setBulkLoading(true);
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const row of bulkRows) {
+        // eslint-disable-next-line no-await-in-loop
+        await apiRequest(`/collection/${row.id}`, {
+          method: 'PUT',
+          body: { id: row.id, quantity: Number(row.quantity), condition: row.condition }
+        });
+      }
+      closeBulk();
+      await load();
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    } catch (e) {
+      setBulkErr(e.message);
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  async function confirmBulkDelete() {
+    if (!confirm(`Delete ${selectedCount} item(s) from your collection?`)) return;
+    setBulkErr('');
+    setBulkLoading(true);
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const id of selectedIds) {
+        // eslint-disable-next-line no-await-in-loop
+        await apiRequest(`/collection/${id}`, { method: 'DELETE' });
+      }
+      await load();
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    } catch (e) {
+      setBulkErr(e.message);
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, []);
@@ -143,11 +253,34 @@ export default function Collection() {
             <div className="text-lg font-bold">Your collection</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">Uses <span className="font-mono">/collection</span></div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className="btn btn-ghost"
+              type="button"
+              onClick={() => {
+                setSelectMode((v) => !v);
+                setSelectedIds(new Set());
+              }}
+            >
+              {selectMode ? 'Exit select' : 'Select'}
+            </button>
             <Link className="btn btn-ghost" to="/app/search">Find cards</Link>
-            <button className="btn btn-primary" onClick={load} disabled={loading}>Refresh</button>
+            <button className="btn btn-primary" type="button" onClick={load} disabled={loading}>Refresh</button>
           </div>
         </div>
+
+        {selectMode && selectedCount > 0 && (
+          <div className="mt-4 rounded-2xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="font-semibold">{selectedCount} selected</div>
+              <div className="flex flex-wrap gap-2">
+                <button className="btn btn-primary" type="button" onClick={openBulkEdit}>Edit selected</button>
+                <button className="btn btn-ghost" type="button" onClick={() => confirmBulkDelete().catch(() => {})} disabled={bulkLoading}>Delete selected</button>
+                <button className="btn btn-ghost" type="button" onClick={() => setSelectedIds(new Set())}>Clear</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {err && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{err}</div>}
 
@@ -185,6 +318,9 @@ export default function Collection() {
             card={cardsById[it.cardId]}
             onUpdate={update}
             onDelete={remove}
+            selectMode={selectMode}
+            selected={selectedIds.has(it.id)}
+            onToggleSelected={toggleSelected}
           />
         ))}
       </div>
@@ -193,6 +329,120 @@ export default function Collection() {
 
       {!loading && !items.length && (
         <div className="card text-sm text-slate-600 dark:text-slate-400">Your collection is empty.</div>
+      )}
+
+      {bulkOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40" onClick={closeBulk} />
+          <div className="relative max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-slate-900/10 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/95">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-lg font-bold">Edit collection items</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Edit {bulkRows.length} selected item(s), then confirm.</div>
+              </div>
+              <button type="button" className="btn btn-ghost" onClick={closeBulk}>Close</button>
+            </div>
+
+            {bulkErr && (
+              <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{bulkErr}</div>
+            )}
+
+            <div className="mt-4 grid gap-3">
+              {bulkRows.map((row, idx) => {
+                const card = cardsById[row.cardId];
+                return (
+                  <div key={row.id} className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        {card?.images?.small ? (
+                          <img
+                            src={card.images.small}
+                            alt={card?.name || row.cardId}
+                            style={{ height: 'calc(var(--card-thumb-h) * 0.95)', width: 'calc(var(--card-thumb-w) * 0.95)' }}
+                            className="rounded-lg object-cover ring-1 ring-black/5 dark:ring-white/10"
+                          />
+                        ) : (
+                          <div style={{ height: 'calc(var(--card-thumb-h) * 0.95)', width: 'calc(var(--card-thumb-w) * 0.95)' }} className="rounded-lg bg-black/5 dark:bg-white/5" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate font-bold">{card?.name || row.cardId}</div>
+                          <div className="text-sm text-slate-600 dark:text-slate-400">
+                            {card?.set ? `${card.set} ` : ''}{card?.number ? `#${card.number}` : ''}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">Item #{row.id}</div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          setBulkRows((prev) => prev.filter((x) => x.id !== row.id));
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            next.delete(row.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Condition</label>
+                        <select
+                          className="input mt-1"
+                          value={row.condition}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], condition: v };
+                              return next;
+                            });
+                          }}
+                        >
+                          {['NM', 'LP', 'MP', 'HP', 'DMG'].map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Quantity</label>
+                        <input
+                          className="input mt-1"
+                          type="number"
+                          min="1"
+                          value={row.quantity}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], quantity: v };
+                              return next;
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button type="button" className="btn btn-ghost" onClick={closeBulk} disabled={bulkLoading}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => confirmBulkSave().catch(() => {})}
+                disabled={bulkLoading || bulkRows.length === 0}
+              >
+                {bulkLoading ? 'Saving…' : 'Confirm save'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

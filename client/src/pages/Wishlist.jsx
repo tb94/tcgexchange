@@ -1,17 +1,36 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function WishlistTile({ item, card }) {
+function WishlistTile({ item, card, selectMode, selected, onToggleSelected }) {
   const title = card?.name || item.cardId;
   const subtitle = [card?.set ? String(card.set) : null, card?.number ? `#${card.number}` : null]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <Link
-      to={`/app/cards/${encodeURIComponent(item.cardId)}`}
-      className="group rounded-2xl border border-slate-900/10 bg-white/70 p-3 hover:shadow-md dark:border-white/10 dark:bg-white/5"
-    >
+    <div className="relative">
+      {selectMode && (
+        <label
+          className="absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/80 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/80"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input type="checkbox" checked={selected} onChange={() => onToggleSelected(item.id)} />
+          Select
+        </label>
+      )}
+
+      <Link
+        to={`/app/cards/${encodeURIComponent(item.cardId)}`}
+        className={
+          `group block rounded-2xl border bg-white/70 p-3 hover:shadow-md dark:bg-white/5 ` +
+          (selected ? 'border-neonCyan/60 ring-4 ring-neonCyan/10' : 'border-slate-900/10 dark:border-white/10')
+        }
+        onClick={(e) => {
+          if (!selectMode) return;
+          e.preventDefault();
+          onToggleSelected(item.id);
+        }}
+      >
       <div className="flex gap-3">
         {card?.images?.small ? (
           <img
@@ -35,6 +54,7 @@ function WishlistTile({ item, card }) {
         </div>
       </div>
     </Link>
+    </div>
   );
 }
 
@@ -44,7 +64,7 @@ import { useCardSize } from '../cardSize.jsx';
 import { useGridCols } from '../gridCols.jsx';
 import { useAutoGridCols } from '../hooks/useAutoGridCols';
 
-function Row({ item, card, onUpdate, onDelete }) {
+function Row({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSelected }) {
   const [qty, setQty] = useState(item.quantityDesired);
   const [priority, setPriority] = useState(item.priority);
   const [minCondition, setMinCondition] = useState(item.minCondition);
@@ -58,7 +78,31 @@ function Row({ item, card, onUpdate, onDelete }) {
   }, [item]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-900/10 bg-white/70 p-3 dark:border-white/10 dark:bg-white/5">
+    <div
+      className={
+        `relative flex flex-col gap-3 rounded-2xl border bg-white/70 p-3 dark:bg-white/5 ` +
+        (selected ? 'border-neonCyan/60 ring-4 ring-neonCyan/10' : 'border-slate-900/10 dark:border-white/10')
+      }
+      onClick={() => {
+        if (!selectMode) return;
+        onToggleSelected(item.id);
+      }}
+      role={selectMode ? 'button' : undefined}
+      tabIndex={selectMode ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (!selectMode) return;
+        if (e.key === 'Enter' || e.key === ' ') onToggleSelected(item.id);
+      }}
+    >
+      {selectMode && (
+        <label
+          className="absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/80 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/80"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input type="checkbox" checked={selected} onChange={() => onToggleSelected(item.id)} />
+          Select
+        </label>
+      )}
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {card?.images?.small ? (
@@ -82,7 +126,7 @@ function Row({ item, card, onUpdate, onDelete }) {
           </div>
         </div>
 
-        <button className="btn btn-ghost" onClick={() => onDelete(item.id).catch((e) => alert(e.message))}>Delete</button>
+        <button className="btn btn-ghost" type="button" onClick={(e) => { e.stopPropagation(); onDelete(item.id).catch((er) => alert(er.message)); }}>Delete</button>
       </div>
 
       <div className="grid gap-2 md:grid-cols-5 md:items-end">
@@ -109,7 +153,11 @@ function Row({ item, card, onUpdate, onDelete }) {
       <div>
         <button
           className="btn btn-primary"
-          onClick={() => onUpdate({ id: item.id, quantityDesired: Number(qty), priority: Number(priority), minCondition, notes }).catch((e) => alert(e.message))}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate({ id: item.id, quantityDesired: Number(qty), priority: Number(priority), minCondition, notes }).catch((er) => alert(er.message));
+          }}
         >
           Save
         </button>
@@ -137,6 +185,13 @@ export default function Wishlist() {
     gapPx: 12
   });
 
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkErr, setBulkErr] = useState('');
+  const [bulkRows, setBulkRows] = useState([]);
+
   const [newCardId, setNewCardId] = useState('');
   const [newQty, setNewQty] = useState(1);
   const [newPriority, setNewPriority] = useState(3);
@@ -148,13 +203,26 @@ export default function Wishlist() {
   const cardIds = useMemo(() => items.map((i) => i.cardId), [items]);
   const { cardsById } = useCardsByIds(cardIds);
 
+  function toggleSelected(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const selectedCount = selectedIds.size;
+
   useEffect(() => {
     localStorage.setItem('wishlistView', view);
   }, [view]);
 
-  // Reset chunking when list changes
+  // Reset chunking + selection when list changes
   useEffect(() => {
     setVisibleCount(CHUNK);
+    setSelectMode(false);
+    setSelectedIds(new Set());
   }, [items.length]);
 
   // Infinite scroll sentinel for client-side chunking
@@ -216,6 +284,80 @@ export default function Wishlist() {
     await load();
   }
 
+  function openBulkEdit() {
+    const ids = Array.from(selectedIds);
+    const rows = items
+      .filter((it) => ids.includes(it.id))
+      .map((it) => ({
+        id: it.id,
+        cardId: it.cardId,
+        quantityDesired: it.quantityDesired,
+        priority: it.priority,
+        minCondition: it.minCondition,
+        notes: it.notes || ''
+      }));
+
+    setBulkRows(rows);
+    setBulkErr('');
+    setBulkOpen(true);
+  }
+
+  function closeBulk() {
+    setBulkOpen(false);
+    setBulkErr('');
+    setBulkLoading(false);
+    setBulkRows([]);
+  }
+
+  async function confirmBulkSave() {
+    setBulkErr('');
+    setBulkLoading(true);
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const row of bulkRows) {
+        // eslint-disable-next-line no-await-in-loop
+        await apiRequest(`/wishlist/${row.id}`, {
+          method: 'PUT',
+          body: {
+            id: row.id,
+            quantityDesired: Number(row.quantityDesired),
+            priority: Number(row.priority),
+            minCondition: row.minCondition,
+            notes: row.notes || null
+          }
+        });
+      }
+      closeBulk();
+      await load();
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    } catch (e) {
+      setBulkErr(e.message);
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  async function confirmBulkDelete() {
+    if (!confirm(`Delete ${selectedCount} wishlist item(s)?`)) return;
+    setBulkErr('');
+    setBulkLoading(true);
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const id of selectedIds) {
+        // eslint-disable-next-line no-await-in-loop
+        await apiRequest(`/wishlist/${id}`, { method: 'DELETE' });
+      }
+      await load();
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    } catch (e) {
+      setBulkErr(e.message);
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, []);
@@ -245,12 +387,35 @@ export default function Wishlist() {
                 Grid
               </button>
             </div>
+            <button
+              className="btn btn-ghost"
+              type="button"
+              onClick={() => {
+                setSelectMode((v) => !v);
+                setSelectedIds(new Set());
+              }}
+            >
+              {selectMode ? 'Exit select' : 'Select'}
+            </button>
             <Link className="btn btn-ghost" to="/app/search">Find cards</Link>
-            <button className="btn btn-primary" onClick={load} disabled={loading}>Refresh</button>
+            <button className="btn btn-primary" type="button" onClick={load} disabled={loading}>Refresh</button>
           </div>
         </div>
 
         {err && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{err}</div>}
+
+        {selectMode && selectedCount > 0 && (
+          <div className="mt-4 rounded-2xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="font-semibold">{selectedCount} selected</div>
+              <div className="flex flex-wrap gap-2">
+                <button className="btn btn-primary" type="button" onClick={openBulkEdit}>Edit selected</button>
+                <button className="btn btn-ghost" type="button" onClick={() => confirmBulkDelete().catch(() => {})} disabled={bulkLoading}>Delete selected</button>
+                <button className="btn btn-ghost" type="button" onClick={() => setSelectedIds(new Set())}>Clear</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
           <div className="font-bold">Add item</div>
@@ -296,6 +461,9 @@ export default function Wishlist() {
               card={cardsById[it.cardId]}
               onUpdate={update}
               onDelete={remove}
+              selectMode={selectMode}
+              selected={selectedIds.has(it.id)}
+              onToggleSelected={toggleSelected}
             />
           ))}
         </div>
@@ -303,10 +471,17 @@ export default function Wishlist() {
         <div
           ref={gridRef}
           className="card-grid"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
         >
           {items.slice(0, visibleCount).map((it) => (
-            <WishlistTile key={it.id} item={it} card={cardsById[it.cardId]} />
+            <WishlistTile
+              key={it.id}
+              item={it}
+              card={cardsById[it.cardId]}
+              selectMode={selectMode}
+              selected={selectedIds.has(it.id)}
+              onToggleSelected={toggleSelected}
+            />
           ))}
         </div>
       )}
@@ -315,6 +490,154 @@ export default function Wishlist() {
 
       {!loading && !items.length && (
         <div className="card text-sm text-slate-600 dark:text-slate-400">Your wishlist is empty.</div>
+      )}
+
+      {bulkOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40" onClick={closeBulk} />
+          <div className="relative max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-slate-900/10 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/95">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-lg font-bold">Edit wishlist items</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Edit {bulkRows.length} selected item(s), then confirm.</div>
+              </div>
+              <button type="button" className="btn btn-ghost" onClick={closeBulk}>Close</button>
+            </div>
+
+            {bulkErr && (
+              <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{bulkErr}</div>
+            )}
+
+            <div className="mt-4 grid gap-3">
+              {bulkRows.map((row, idx) => {
+                const card = cardsById[row.cardId];
+                return (
+                  <div key={row.id} className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        {card?.images?.small ? (
+                          <img
+                            src={card.images.small}
+                            alt={card?.name || row.cardId}
+                            style={{ height: 'calc(var(--card-thumb-h) * 0.95)', width: 'calc(var(--card-thumb-w) * 0.95)' }}
+                            className="rounded-lg object-cover ring-1 ring-black/5 dark:ring-white/10"
+                          />
+                        ) : (
+                          <div style={{ height: 'calc(var(--card-thumb-h) * 0.95)', width: 'calc(var(--card-thumb-w) * 0.95)' }} className="rounded-lg bg-black/5 dark:bg-white/5" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate font-bold">{card?.name || row.cardId}</div>
+                          <div className="text-sm text-slate-600 dark:text-slate-400">
+                            {card?.set ? `${card.set} ` : ''}{card?.number ? `#${card.number}` : ''}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">Item #{row.id}</div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => {
+                          setBulkRows((prev) => prev.filter((x) => x.id !== row.id));
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            next.delete(row.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Min condition</label>
+                        <select
+                          className="input mt-1"
+                          value={row.minCondition}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], minCondition: v };
+                              return next;
+                            });
+                          }}
+                        >
+                          {['NM', 'LP', 'MP', 'HP', 'DMG'].map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Quantity desired</label>
+                        <input
+                          className="input mt-1"
+                          type="number"
+                          min="1"
+                          value={row.quantityDesired}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], quantityDesired: v };
+                              return next;
+                            });
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Priority (1..5)</label>
+                        <input
+                          className="input mt-1"
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={row.priority}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], priority: v };
+                              return next;
+                            });
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Notes</label>
+                        <input
+                          className="input mt-1"
+                          value={row.notes}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], notes: v };
+                              return next;
+                            });
+                          }}
+                          placeholder="Optional"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button type="button" className="btn btn-ghost" onClick={closeBulk} disabled={bulkLoading}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => confirmBulkSave().catch(() => {})}
+                disabled={bulkLoading || bulkRows.length === 0}
+              >
+                {bulkLoading ? 'Saving…' : 'Confirm save'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

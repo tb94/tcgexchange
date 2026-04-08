@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
 import { useCardsByIds } from '../hooks/useCardsByIds';
 
-function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSelected }) {
+function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSelected, onEdit }) {
   const [qty, setQty] = useState(item.quantity);
   const [condition, setCondition] = useState(item.condition);
   const [notes, setNotes] = useState(item.notes || '');
@@ -34,6 +34,18 @@ function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggl
         if (e.key === 'Enter' || e.key === ' ') onToggleSelected(item.id);
       }}
     >
+      {!selectMode && (
+        <button
+          type="button"
+          className="btn btn-ghost absolute right-2 top-2 z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(item);
+          }}
+        >
+          Edit
+        </button>
+      )}
       {selectMode && (
         <label
           className="absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/80 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/80"
@@ -111,6 +123,10 @@ export default function Collection() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+
+  const [editItem, setEditItem] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editErr, setEditErr] = useState('');
 
   const CHUNK = 25;
   const [visibleCount, setVisibleCount] = useState(CHUNK);
@@ -356,6 +372,16 @@ export default function Collection() {
             selectMode={selectMode}
             selected={selectedIds.has(it.id)}
             onToggleSelected={toggleSelected}
+            onEdit={(item) => {
+              setEditErr('');
+              setEditItem({
+                id: item.id,
+                cardId: item.cardId,
+                quantity: item.quantity,
+                condition: item.condition,
+                notes: item.notes || ''
+              });
+            }}
           />
         ))}
       </div>
@@ -364,6 +390,117 @@ export default function Collection() {
 
       {!loading && !items.length && (
         <div className="card text-sm text-slate-600 dark:text-slate-400">Your collection is empty.</div>
+      )}
+
+      {editItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              if (editLoading) return;
+              setEditItem(null);
+              setEditErr('');
+            }}
+          />
+
+          <div className="relative w-full max-w-xl rounded-2xl border border-slate-900/10 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/95">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-lg font-bold">Edit collection item</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">{editItem.cardId}</div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  if (editLoading) return;
+                  setEditItem(null);
+                  setEditErr('');
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            {editErr && (
+              <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{editErr}</div>
+            )}
+
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Condition</label>
+                <select
+                  className="input mt-1"
+                  value={editItem.condition}
+                  onChange={(e) => setEditItem((prev) => ({ ...prev, condition: e.target.value }))}
+                >
+                  {['NM', 'LP', 'MP', 'HP', 'DMG'].map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Qty</label>
+                <input
+                  className="input mt-1"
+                  type="number"
+                  min="1"
+                  value={editItem.quantity}
+                  onChange={(e) => setEditItem((prev) => ({ ...prev, quantity: e.target.value }))}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Notes</label>
+                <input
+                  className="input mt-1"
+                  value={editItem.notes}
+                  onChange={(e) => setEditItem((prev) => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  if (editLoading) return;
+                  setEditItem(null);
+                  setEditErr('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={editLoading}
+                onClick={async () => {
+                  setEditErr('');
+                  setEditLoading(true);
+                  try {
+                    await update({
+                      id: editItem.id,
+                      quantity: Number(editItem.quantity),
+                      condition: editItem.condition,
+                      notes: editItem.notes || null
+                    });
+                    setEditItem(null);
+                  } catch (e) {
+                    setEditErr(e.message);
+                  } finally {
+                    setEditLoading(false);
+                  }
+                }}
+              >
+                {editLoading ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {bulkOpen && (

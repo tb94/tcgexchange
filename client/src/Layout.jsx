@@ -105,6 +105,7 @@ export default function Layout() {
               value={gridCols.maxCols}
               onChange={(e) => gridCols.setMaxCols(Number(e.target.value))}
             >
+              <option value={99}>Auto</option>
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
@@ -187,6 +188,7 @@ export default function Layout() {
               onChange={(e) => gridCols.setMaxCols(Number(e.target.value))}
               title="Max columns"
             >
+              <option value={99}>Auto</option>
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}

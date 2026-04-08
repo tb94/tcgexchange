@@ -7,7 +7,8 @@ export function GridColsProvider({ children }) {
     const raw = localStorage.getItem('gridMaxCols');
     const n = Number(raw);
     if (!Number.isFinite(n)) return 3;
-    return Math.min(6, Math.max(1, Math.floor(n)));
+    // Allow a large number for "Auto" (effectively uncapped).
+    return Math.min(99, Math.max(1, Math.floor(n)));
   });
 
   useEffect(() => {

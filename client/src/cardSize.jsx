@@ -44,7 +44,7 @@ export function CardSizeProvider({ children }) {
     if (size === 'sm') return 260;
     // Note: JS uses a single numeric minimum for fit calculations.
     // Keep this a bit smaller than the CSS clamp() max so large cards can still fit 3-up on common desktop widths.
-    if (size === 'lg') return 380;
+    if (size === 'lg') return 340;
     return 340;
   }, [size]);
 

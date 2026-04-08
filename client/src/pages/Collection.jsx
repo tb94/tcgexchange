@@ -2,6 +2,105 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
 import { useCardsByIds } from '../hooks/useCardsByIds';
+import { useCardSize } from '../cardSize.jsx';
+import { useGridCols } from '../gridCols.jsx';
+import { useAutoGridCols } from '../hooks/useAutoGridCols';
+
+function CollectionTile({ item, card, selectMode, selected, onToggleSelected, onEdit }) {
+  const title = card?.name || item.cardId;
+  const subtitle = [card?.set ? String(card.set) : null, card?.number ? `#${card.number}` : null]
+    .filter(Boolean)
+    .join(' ');
+  const [showNote, setShowNote] = useState(false);
+  const hasNote = Boolean(item.notes && String(item.notes).trim());
+
+  return (
+    <div className="relative">
+      {selectMode && (
+        <label
+          className="absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/80 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur dark:border-white/10 dark:bg-[#0b1220]/80"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input type="checkbox" checked={selected} onChange={() => onToggleSelected(item.id)} />
+          Select
+        </label>
+      )}
+
+      <Link
+        to={`/app/cards/${encodeURIComponent(item.cardId)}`}
+        className={
+          `group block rounded-2xl border bg-white/70 p-3 hover:shadow-md dark:bg-white/5 ` +
+          (selected ? 'border-neonCyan/60 ring-4 ring-neonCyan/10' : 'border-slate-900/10 dark:border-white/10')
+        }
+        onClick={(e) => {
+          if (!selectMode) return;
+          e.preventDefault();
+          onToggleSelected(item.id);
+        }}
+      >
+        <div className="flex gap-3">
+          {!selectMode && (
+            <button
+              type="button"
+              className="btn btn-ghost absolute right-2 top-2 z-10"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEdit?.(item);
+              }}
+            >
+              Edit
+            </button>
+          )}
+
+          {card?.images?.small ? (
+            <img
+              src={card.images.small}
+              alt={title}
+              style={{ height: 'var(--card-thumb-h)', width: 'var(--card-thumb-w)' }}
+              className="rounded-lg object-cover ring-1 ring-black/5 dark:ring-white/10"
+              loading="lazy"
+            />
+          ) : (
+            <div style={{ height: 'var(--card-thumb-h)', width: 'var(--card-thumb-w)' }} className="rounded-lg bg-black/5 dark:bg-white/5" />
+          )}
+
+          <div className="min-w-0">
+            <div className="truncate font-bold group-hover:underline">{title}</div>
+            {subtitle && <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">{subtitle}</div>}
+
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="badge">Qty x{item.quantity}</span>
+              <span className="badge">{item.condition}</span>
+            </div>
+
+            {hasNote && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowNote((v) => !v);
+                  }}
+                >
+                  {showNote ? 'Hide note' : 'Show note'}
+                </button>
+
+                {showNote && (
+                  <div className="mt-2 whitespace-pre-wrap rounded-xl border border-slate-900/10 bg-white/60 p-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                    {String(item.notes).trim()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}
 
 function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSelected, onEdit }) {
   const [qty, setQty] = useState(item.quantity);
@@ -127,6 +226,19 @@ export default function Collection() {
   const [editItem, setEditItem] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editErr, setEditErr] = useState('');
+
+  const [view, setView] = useState(() => localStorage.getItem('collectionView') || 'list');
+
+  const gridContainerRef = useRef(null);
+  const cardSize = useCardSize();
+  const gridPrefs = useGridCols();
+  const cols = useAutoGridCols({
+    containerRef: gridContainerRef,
+    maxCols: gridPrefs.maxCols,
+    minTilePx: cardSize.minTilePx,
+    gapPx: 12,
+    safetyPx: 20
+  });
 
   const CHUNK = 25;
   const [visibleCount, setVisibleCount] = useState(CHUNK);
@@ -292,6 +404,10 @@ export default function Collection() {
     load();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('collectionView', view);
+  }, [view]);
+
   return (
     <div className="grid gap-4">
       <div className="card">
@@ -301,6 +417,23 @@ export default function Collection() {
             <div className="text-sm text-slate-600 dark:text-slate-400">Uses <span className="font-mono">/collection</span></div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex overflow-hidden rounded-xl border border-slate-900/10 bg-white/60 text-sm dark:border-white/10 dark:bg-white/5">
+              <button
+                type="button"
+                className={`px-3 py-2 text-sm font-semibold ${view === 'list' ? 'bg-black/5 dark:bg-white/10' : ''}`}
+                onClick={() => setView('list')}
+              >
+                List
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 text-sm font-semibold ${view === 'grid' ? 'bg-black/5 dark:bg-white/10' : ''}`}
+                onClick={() => setView('grid')}
+              >
+                Grid
+              </button>
+            </div>
+
             <button
               className="btn btn-ghost"
               type="button"
@@ -361,30 +494,60 @@ export default function Collection() {
 
       {loading && <div className="card text-slate-600 dark:text-slate-400">Loading…</div>}
 
-      <div className="grid gap-3">
-        {items.slice(0, visibleCount).map((it) => (
-          <ItemRow
-            key={it.id}
-            item={it}
-            card={cardsById[it.cardId]}
-            onUpdate={update}
-            onDelete={remove}
-            selectMode={selectMode}
-            selected={selectedIds.has(it.id)}
-            onToggleSelected={toggleSelected}
-            onEdit={(item) => {
-              setEditErr('');
-              setEditItem({
-                id: item.id,
-                cardId: item.cardId,
-                quantity: item.quantity,
-                condition: item.condition,
-                notes: item.notes || ''
-              });
-            }}
-          />
-        ))}
-      </div>
+      {view === 'list' ? (
+        <div className="grid gap-3">
+          {items.slice(0, visibleCount).map((it) => (
+            <ItemRow
+              key={it.id}
+              item={it}
+              card={cardsById[it.cardId]}
+              onUpdate={update}
+              onDelete={remove}
+              selectMode={selectMode}
+              selected={selectedIds.has(it.id)}
+              onToggleSelected={toggleSelected}
+              onEdit={(item) => {
+                setEditErr('');
+                setEditItem({
+                  id: item.id,
+                  cardId: item.cardId,
+                  quantity: item.quantity,
+                  condition: item.condition,
+                  notes: item.notes || ''
+                });
+              }}
+            />
+          ))}
+        </div>
+      ) : (
+        <div ref={gridContainerRef} className="w-full">
+          <div
+            className="card-grid"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
+          >
+            {items.slice(0, visibleCount).map((it) => (
+              <CollectionTile
+                key={it.id}
+                item={it}
+                card={cardsById[it.cardId]}
+                selectMode={selectMode}
+                selected={selectedIds.has(it.id)}
+                onToggleSelected={toggleSelected}
+                onEdit={(item) => {
+                  setEditErr('');
+                  setEditItem({
+                    id: item.id,
+                    cardId: item.cardId,
+                    quantity: item.quantity,
+                    condition: item.condition,
+                    notes: item.notes || ''
+                  });
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div ref={sentinelRef} />
 

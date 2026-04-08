@@ -446,6 +446,9 @@ export default function Wishlist() {
             </button>
             <Link className="btn btn-ghost" to="/app/search">Find cards</Link>
             <button className="btn btn-primary" type="button" onClick={load} disabled={loading}>Refresh</button>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Grid: {cols} (max {gridPrefs.maxCols}, min {cardSize.minTilePx}px)
+            </span>
           </div>
         </div>
 

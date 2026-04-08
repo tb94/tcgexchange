@@ -413,6 +413,9 @@ export default function Search() {
 
           <div className="text-slate-600 dark:text-slate-400">
             {cards.length ? `${cards.length} loaded` : ''}
+            <span className="ml-3 text-xs opacity-80">
+              Grid: {cols} (max {gridPrefs.maxCols}, min {cardSize.minTilePx}px)
+            </span>
           </div>
         </div>
       </form>

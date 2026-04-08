@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 1,
       validate: { min: 1 }
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   });
 

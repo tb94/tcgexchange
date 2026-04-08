@@ -6,11 +6,16 @@ import { useCardsByIds } from '../hooks/useCardsByIds';
 function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggleSelected }) {
   const [qty, setQty] = useState(item.quantity);
   const [condition, setCondition] = useState(item.condition);
+  const [notes, setNotes] = useState(item.notes || '');
+  const [showNote, setShowNote] = useState(false);
+  const hasNote = Boolean(item.notes && String(item.notes).trim());
 
   useEffect(() => {
     setQty(item.quantity);
     setCondition(item.condition);
-  }, [item.condition, item.quantity]);
+    setNotes(item.notes || '');
+    setShowNote(false);
+  }, [item.condition, item.quantity, item.notes]);
 
   return (
     <div
@@ -60,7 +65,7 @@ function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggl
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-3 md:items-end">
+      <div className="grid gap-2 md:grid-cols-4 md:items-end">
         <div>
           <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Condition</label>
           <select className="input mt-1" value={condition} onChange={(e) => setCondition(e.target.value)}>
@@ -71,14 +76,32 @@ function ItemRow({ item, card, onUpdate, onDelete, selectMode, selected, onToggl
           <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Qty</label>
           <input className="input mt-1" type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} />
         </div>
-        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-          <button className="btn btn-primary" type="button" onClick={() => onUpdate({ id: item.id, quantity: Number(qty), condition }).catch((e) => alert(e.message))}>
-            Save
-          </button>
-          <button className="btn btn-ghost" type="button" onClick={() => onDelete(item.id).catch((e) => alert(e.message))}>
-            Delete
-          </button>
+        <div className="md:col-span-2">
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Notes</label>
+          <input className="input mt-1" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
         </div>
+      </div>
+
+      {hasNote && (
+        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+          <button type="button" className="btn btn-ghost" onClick={() => setShowNote((v) => !v)}>
+            {showNote ? 'Hide note' : 'Show note'}
+          </button>
+          {showNote && (
+            <div className="mt-2 whitespace-pre-wrap rounded-xl border border-slate-900/10 bg-white/60 p-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+              {String(item.notes).trim()}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
+        <button className="btn btn-primary" type="button" onClick={() => onUpdate({ id: item.id, quantity: Number(qty), condition, notes }).catch((e) => alert(e.message))}>
+          Save
+        </button>
+        <button className="btn btn-ghost" type="button" onClick={() => onDelete(item.id).catch((e) => alert(e.message))}>
+          Delete
+        </button>
       </div>
     </div>
   );
@@ -103,6 +126,7 @@ export default function Collection() {
   const [newCardId, setNewCardId] = useState('');
   const [newQty, setNewQty] = useState(1);
   const [newCondition, setNewCondition] = useState('NM');
+  const [newNotes, setNewNotes] = useState('');
 
   const cardIds = useMemo(() => items.map((i) => i.cardId), [items]);
   const { cardsById } = useCardsByIds(cardIds);
@@ -157,10 +181,16 @@ export default function Collection() {
   async function add() {
     await apiRequest('/collection', {
       method: 'POST',
-      body: { cardId: newCardId.trim(), quantity: Number(newQty), condition: newCondition },
+      body: {
+        cardId: newCardId.trim(),
+        quantity: Number(newQty),
+        condition: newCondition,
+        notes: newNotes || null
+      },
     });
     setNewCardId('');
     setNewQty(1);
+    setNewNotes('');
     await load();
   }
 
@@ -183,7 +213,8 @@ export default function Collection() {
         id: it.id,
         cardId: it.cardId,
         quantity: it.quantity,
-        condition: it.condition
+        condition: it.condition,
+        notes: it.notes || ''
       }));
 
     setBulkRows(rows);
@@ -207,7 +238,7 @@ export default function Collection() {
         // eslint-disable-next-line no-await-in-loop
         await apiRequest(`/collection/${row.id}`, {
           method: 'PUT',
-          body: { id: row.id, quantity: Number(row.quantity), condition: row.condition }
+          body: { id: row.id, quantity: Number(row.quantity), condition: row.condition, notes: row.notes || null }
         });
       }
       closeBulk();
@@ -286,7 +317,7 @@ export default function Collection() {
 
         <div className="mt-4 rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
           <div className="font-bold">Add item</div>
-          <div className="mt-2 grid gap-2 md:grid-cols-4">
+          <div className="mt-2 grid gap-2 md:grid-cols-6">
             <div className="md:col-span-2">
               <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Card ID</label>
               <input className="input mt-1" value={newCardId} onChange={(e) => setNewCardId(e.target.value)} placeholder="sv3pt5-65" />
@@ -300,6 +331,10 @@ export default function Collection() {
             <div>
               <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Qty</label>
               <input className="input mt-1" type="number" min="1" value={newQty} onChange={(e) => setNewQty(e.target.value)} />
+            </div>
+            <div className="md:col-span-6">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Notes</label>
+              <input className="input mt-1" value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="Optional" />
             </div>
           </div>
           <button className="btn btn-primary mt-3" onClick={() => add().catch((e) => alert(e.message))} disabled={!newCardId.trim()}>
@@ -422,6 +457,22 @@ export default function Collection() {
                               return next;
                             });
                           }}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Notes</label>
+                        <input
+                          className="input mt-1"
+                          value={row.notes}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBulkRows((prev) => {
+                              const next = [...prev];
+                              next[idx] = { ...next[idx], notes: v };
+                              return next;
+                            });
+                          }}
+                          placeholder="Optional"
                         />
                       </div>
                     </div>

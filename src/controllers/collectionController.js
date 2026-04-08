@@ -16,7 +16,7 @@ exports.list = async (req, res) => {
 
 exports.add = async (req, res) => {
   try {
-    const { cardId, condition = 'NM', quantity = 1 } = req.body;
+    const { cardId, condition = 'NM', quantity = 1, notes = null } = req.body;
     if (!cardId) return res.status(400).json({ error: 'cardId required' });
     if (!VALID_CONDITIONS.has(condition)) return res.status(400).json({ error: 'invalid condition' });
     const qty = Number(quantity);
@@ -29,6 +29,9 @@ exports.add = async (req, res) => {
 
     if (existing) {
       existing.quantity += qty;
+      if (notes !== undefined && notes !== null) {
+        existing.notes = notes;
+      }
       await existing.save();
       return res.json({ item: existing, merged: true });
     }
@@ -37,7 +40,8 @@ exports.add = async (req, res) => {
       userId: req.user.userId,
       cardId,
       condition,
-      quantity: qty
+      quantity: qty,
+      notes: notes || null
     });
 
     return res.json({ item, merged: false });
@@ -49,7 +53,7 @@ exports.add = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { quantity, condition } = req.body;
+    const { quantity, condition, notes } = req.body;
 
     const item = await CollectionItem.findOne({ where: { id, userId: req.user.userId } });
     if (!item) return res.status(404).json({ error: 'not found' });
@@ -63,6 +67,10 @@ exports.update = async (req, res) => {
       const qty = Number(quantity);
       if (!Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: 'quantity must be integer >= 1' });
       item.quantity = qty;
+    }
+
+    if (notes !== undefined) {
+      item.notes = notes || null;
     }
 
     await item.save();

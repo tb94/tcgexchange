@@ -8,6 +8,8 @@ const cardRoutes = require('./routes/cards');
 const collectionRoutes = require('./routes/collection');
 const wishlistRoutes = require('./routes/wishlist');
 
+const { sequelize } = require('../models');
+
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -31,6 +33,15 @@ app.get(['/', '/app', '/app/*'], (req, res) => {
   res.sendFile(path.join(reactDist, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+(async () => {
+  // Keep SQLite schema in sync for simple, local-dev style deployments.
+  // This will add new nullable columns (like CollectionItem.notes) automatically.
+  await sequelize.sync({ alter: true });
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+})().catch((e) => {
+  console.error('Failed to start server:', e);
+  process.exit(1);
 });

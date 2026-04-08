@@ -773,33 +773,17 @@ export default function Wishlist() {
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex flex-wrap justify-between gap-2">
               <button
                 type="button"
                 className="btn btn-ghost"
-                onClick={() => {
-                  if (editLoading) return;
-                  setEditItem(null);
-                  setEditErr('');
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
                 disabled={editLoading}
                 onClick={async () => {
+                  if (!confirm('Delete this wishlist item?')) return;
                   setEditErr('');
                   setEditLoading(true);
                   try {
-                    await update({
-                      id: editItem.id,
-                      quantityDesired: Number(editItem.quantityDesired),
-                      priority: Number(editItem.priority),
-                      minCondition: editItem.minCondition,
-                      notes: editItem.notes || null
-                    });
+                    await remove(editItem.id);
                     setEditItem(null);
                   } catch (e) {
                     setEditErr(e.message);
@@ -808,8 +792,47 @@ export default function Wishlist() {
                   }
                 }}
               >
-                {editLoading ? 'Saving…' : 'Save'}
+                Delete
               </button>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    if (editLoading) return;
+                    setEditItem(null);
+                    setEditErr('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={editLoading}
+                  onClick={async () => {
+                    setEditErr('');
+                    setEditLoading(true);
+                    try {
+                      await update({
+                        id: editItem.id,
+                        quantityDesired: Number(editItem.quantityDesired),
+                        priority: Number(editItem.priority),
+                        minCondition: editItem.minCondition,
+                        notes: editItem.notes || null
+                      });
+                      setEditItem(null);
+                    } catch (e) {
+                      setEditErr(e.message);
+                    } finally {
+                      setEditLoading(false);
+                    }
+                  }}
+                >
+                  {editLoading ? 'Saving…' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

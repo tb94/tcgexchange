@@ -89,11 +89,12 @@ export default function Search() {
   const [bulkRows, setBulkRows] = useState([]);
 
   const sentinelRef = useRef(null);
-  const gridRef = useRef(null);
+  const gridContainerRef = useRef(null);
   const cardSize = useCardSize();
   const gridPrefs = useGridCols();
   const cols = useAutoGridCols({
-    containerRef: gridRef,
+    // Measure the *container* width so overflow doesn't trick the calculation.
+    containerRef: gridContainerRef,
     maxCols: gridPrefs.maxCols,
     minTilePx: cardSize.minTilePx,
     gapPx: 12
@@ -426,20 +427,21 @@ export default function Search() {
         </div>
       )}
 
-      <div
-        ref={gridRef}
-        className="card-grid"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
-      >
-        {cards.map((c) => (
-          <CardTile
-            key={c.id}
-            card={c}
-            selectMode={selectMode}
-            selected={selectedIds.has(c.id)}
-            onToggleSelected={toggleSelected}
-          />
-        ))}
+      <div ref={gridContainerRef} className="w-full">
+        <div
+          className="card-grid"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
+        >
+          {cards.map((c) => (
+            <CardTile
+              key={c.id}
+              card={c}
+              selectMode={selectMode}
+              selected={selectedIds.has(c.id)}
+              onToggleSelected={toggleSelected}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Infinite scroll sentinel */}

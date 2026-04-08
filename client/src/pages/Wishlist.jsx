@@ -220,11 +220,12 @@ export default function Wishlist() {
   const [visibleCount, setVisibleCount] = useState(CHUNK);
   const sentinelRef = useRef(null);
 
-  const gridRef = useRef(null);
+  const gridContainerRef = useRef(null);
   const cardSize = useCardSize();
   const gridPrefs = useGridCols();
   const cols = useAutoGridCols({
-    containerRef: gridRef,
+    // Measure the *container* width so overflow doesn't trick the calculation.
+    containerRef: gridContainerRef,
     maxCols: gridPrefs.maxCols,
     minTilePx: cardSize.minTilePx,
     gapPx: 12
@@ -513,21 +514,22 @@ export default function Wishlist() {
           ))}
         </div>
       ) : (
-        <div
-          ref={gridRef}
-          className="card-grid"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
-        >
-          {items.slice(0, visibleCount).map((it) => (
-            <WishlistTile
-              key={it.id}
-              item={it}
-              card={cardsById[it.cardId]}
-              selectMode={selectMode}
-              selected={selectedIds.has(it.id)}
-              onToggleSelected={toggleSelected}
-            />
-          ))}
+        <div ref={gridContainerRef} className="w-full">
+          <div
+            className="card-grid"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}
+          >
+            {items.slice(0, visibleCount).map((it) => (
+              <WishlistTile
+                key={it.id}
+                item={it}
+                card={cardsById[it.cardId]}
+                selectMode={selectMode}
+                selected={selectedIds.has(it.id)}
+                onToggleSelected={toggleSelected}
+              />
+            ))}
+          </div>
         </div>
       )}
 

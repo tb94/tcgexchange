@@ -43,7 +43,7 @@ export default function Layout() {
   }, [menuOpen]);
 
   return (
-    <div className="mx-auto max-w-6xl p-3 sm:p-4 md:p-6">
+    <div className="mx-auto max-w-[1440px] p-3 sm:p-4 md:p-6">
       {/* Mobile drawer overlay */}
       {menuOpen && (
         <button

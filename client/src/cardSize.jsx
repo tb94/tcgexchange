@@ -42,7 +42,9 @@ export function CardSizeProvider({ children }) {
   const minTilePx = useMemo(() => {
     // Used for responsive grid column calculations (in JS). Keep this aligned with your chosen sizes.
     if (size === 'sm') return 260;
-    if (size === 'lg') return 420;
+    // Note: JS uses a single numeric minimum for fit calculations.
+    // Keep this a bit smaller than the CSS clamp() max so large cards can still fit 3-up on common desktop widths.
+    if (size === 'lg') return 380;
     return 340;
   }, [size]);
 

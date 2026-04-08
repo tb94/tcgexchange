@@ -29,10 +29,29 @@ export function useAutoGridCols({ containerRef, maxCols = 3, minTilePx = 320, ga
     });
     ro.observe(el);
 
-    // initial
-    recompute(el.getBoundingClientRect().width);
+    // initial (sometimes 0 on first paint)
+    const initial = el.getBoundingClientRect().width;
+    recompute(initial);
 
-    return () => ro.disconnect();
+    // If width is 0 (layout not settled yet), retry a couple times.
+    let tries = 0;
+    let cancelled = false;
+    function retry() {
+      if (cancelled) return;
+      tries += 1;
+      const w = el.getBoundingClientRect().width;
+      if (w > 0 || tries >= 5) {
+        recompute(w);
+        return;
+      }
+      window.requestAnimationFrame(retry);
+    }
+    if (initial === 0) window.requestAnimationFrame(retry);
+
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+    };
   }, [containerRef, gapPx, maxCols, minTilePx]);
 
   return cols;

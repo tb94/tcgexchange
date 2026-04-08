@@ -40,6 +40,9 @@ function WishlistTile({ item, card }) {
 
 import { apiRequest } from '../api';
 import { useCardsByIds } from '../hooks/useCardsByIds';
+import { useCardSize } from '../cardSize.jsx';
+import { useGridCols } from '../gridCols.jsx';
+import { useAutoGridCols } from '../hooks/useAutoGridCols';
 
 function Row({ item, card, onUpdate, onDelete }) {
   const [qty, setQty] = useState(item.quantityDesired);
@@ -123,6 +126,16 @@ export default function Wishlist() {
   const CHUNK = 25;
   const [visibleCount, setVisibleCount] = useState(CHUNK);
   const sentinelRef = useRef(null);
+
+  const gridRef = useRef(null);
+  const cardSize = useCardSize();
+  const gridPrefs = useGridCols();
+  const cols = useAutoGridCols({
+    containerRef: gridRef,
+    maxCols: gridPrefs.maxCols,
+    minTilePx: cardSize.minTilePx,
+    gapPx: 12
+  });
 
   const [newCardId, setNewCardId] = useState('');
   const [newQty, setNewQty] = useState(1);
@@ -287,7 +300,11 @@ export default function Wishlist() {
           ))}
         </div>
       ) : (
-        <div className="card-grid">
+        <div
+          ref={gridRef}
+          className="card-grid"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+        >
           {items.slice(0, visibleCount).map((it) => (
             <WishlistTile key={it.id} item={it} card={cardsById[it.cardId]} />
           ))}

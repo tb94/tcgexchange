@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
+import { useCardSize } from '../cardSize.jsx';
+import { useGridCols } from '../gridCols.jsx';
+import { useAutoGridCols } from '../hooks/useAutoGridCols';
 
 function CardTile({ card }) {
   return (
@@ -49,6 +52,15 @@ export default function Search() {
   const [err, setErr] = useState('');
 
   const sentinelRef = useRef(null);
+  const gridRef = useRef(null);
+  const cardSize = useCardSize();
+  const gridPrefs = useGridCols();
+  const cols = useAutoGridCols({
+    containerRef: gridRef,
+    maxCols: gridPrefs.maxCols,
+    minTilePx: cardSize.minTilePx,
+    gapPx: 12
+  });
 
   // Debounce name input to avoid hammering the API while typing.
   useEffect(() => {
@@ -249,7 +261,11 @@ export default function Search() {
         </div>
       </form>
 
-      <div className="card-grid">
+      <div
+        ref={gridRef}
+        className="card-grid"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
         {cards.map((c) => (
           <CardTile key={c.id} card={c} />
         ))}

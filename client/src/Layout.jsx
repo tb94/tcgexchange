@@ -4,6 +4,7 @@ import { clearToken, getToken } from './api';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import { useTheme } from './theme';
 import { useCardSize } from './cardSize.jsx';
+import { useGridCols } from './gridCols.jsx';
 
 function NavItem({ to, children }) {
   return (
@@ -24,6 +25,7 @@ export default function Layout() {
   const token = getToken();
   const theme = useTheme();
   const cardSize = useCardSize();
+  const gridCols = useGridCols();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Close the drawer when route changes
@@ -95,6 +97,19 @@ export default function Layout() {
             </select>
           </div>
 
+          <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">
+            <div className="mb-2 font-semibold text-slate-700 dark:text-slate-200">Grid columns</div>
+            <select
+              className="input"
+              value={gridCols.maxCols}
+              onChange={(e) => gridCols.setMaxCols(Number(e.target.value))}
+            >
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-center justify-between gap-2 rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">
             <div className="font-semibold text-slate-700 dark:text-slate-200">Theme</div>
             <ThemeToggle theme={theme.theme} onToggle={theme.toggle} />
@@ -158,6 +173,20 @@ export default function Layout() {
               <option value="sm">Small</option>
               <option value="md">Medium</option>
               <option value="lg">Large</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+            <div className="text-slate-700 dark:text-slate-200">Grid</div>
+            <select
+              className="rounded-lg border border-slate-900/10 bg-white/70 px-2 py-1 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
+              value={gridCols.maxCols}
+              onChange={(e) => gridCols.setMaxCols(Number(e.target.value))}
+              title="Max columns"
+            >
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
             </select>
           </div>
 

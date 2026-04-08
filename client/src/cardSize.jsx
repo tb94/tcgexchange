@@ -10,22 +10,23 @@ export function CardSizeProvider({ children }) {
 
     // Use clamp() so sizing adapts to phone vs desktop widths.
     // These are CSS strings intentionally (not numbers).
+    // Bump all three sizes up while keeping roughly the same relative ratios.
     const sm = {
-      min: 'clamp(160px, 44vw, 220px)',
-      h: 'clamp(60px, 16vw, 64px)',
-      w: 'clamp(42px, 12vw, 46px)'
+      min: 'clamp(180px, 48vw, 260px)',
+      h: 'clamp(66px, 18vw, 78px)',
+      w: 'clamp(46px, 14vw, 56px)'
     };
 
     const md = {
-      min: 'clamp(180px, 50vw, 280px)',
-      h: 'clamp(70px, 18vw, 84px)',
-      w: 'clamp(50px, 14vw, 60px)'
+      min: 'clamp(210px, 54vw, 340px)',
+      h: 'clamp(78px, 20vw, 100px)',
+      w: 'clamp(56px, 16vw, 72px)'
     };
 
     const lg = {
-      min: 'clamp(200px, 60vw, 340px)',
-      h: 'clamp(84px, 22vw, 110px)',
-      w: 'clamp(60px, 18vw, 78px)'
+      min: 'clamp(240px, 66vw, 420px)',
+      h: 'clamp(96px, 26vw, 140px)',
+      w: 'clamp(70px, 22vw, 100px)'
     };
 
     const preset = size === 'sm' ? sm : (size === 'lg' ? lg : md);
@@ -38,7 +39,14 @@ export function CardSizeProvider({ children }) {
     // Grid columns are responsive via CSS; no forced column count.
   }, [size]);
 
-  const value = useMemo(() => ({ size, setSize }), [size]);
+  const minTilePx = useMemo(() => {
+    // Used for responsive grid column calculations (in JS). Keep this aligned with your chosen sizes.
+    if (size === 'sm') return 260;
+    if (size === 'lg') return 420;
+    return 340;
+  }, [size]);
+
+  const value = useMemo(() => ({ size, setSize, minTilePx }), [size, minTilePx]);
 
   return (
     <CardSizeContext.Provider value={value}>{children}</CardSizeContext.Provider>

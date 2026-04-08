@@ -97,7 +97,8 @@ export default function Search() {
     containerRef: gridContainerRef,
     maxCols: gridPrefs.maxCols,
     minTilePx: cardSize.minTilePx,
-    gapPx: 12
+    gapPx: 12,
+    safetyPx: 20
   });
 
   // Debounce name input to avoid hammering the API while typing.

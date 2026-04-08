@@ -228,7 +228,8 @@ export default function Wishlist() {
     containerRef: gridContainerRef,
     maxCols: gridPrefs.maxCols,
     minTilePx: cardSize.minTilePx,
-    gapPx: 12
+    gapPx: 12,
+    safetyPx: 20
   });
 
   const [selectMode, setSelectMode] = useState(false);

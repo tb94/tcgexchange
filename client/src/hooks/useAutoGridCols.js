@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 // Compute how many columns can fit in a container, capped by maxCols,
 // while respecting a minimum tile width (minTilePx).
-export function useAutoGridCols({ containerRef, maxCols = 3, minTilePx = 320, gapPx = 12 }) {
+export function useAutoGridCols({ containerRef, maxCols = 3, minTilePx = 320, gapPx = 12, safetyPx = 16 }) {
   const [cols, setCols] = useState(() => Math.max(1, Math.floor(maxCols)));
 
   useEffect(() => {
@@ -13,9 +13,12 @@ export function useAutoGridCols({ containerRef, maxCols = 3, minTilePx = 320, ga
       const max = Math.max(1, Math.floor(maxCols));
       const min = Math.max(160, Number(minTilePx) || 320);
       const gap = Math.max(0, Number(gapPx) || 0);
+      const safety = Math.max(0, Number(safetyPx) || 0);
 
-      // Fit formula: cols * min + (cols-1) * gap <= width
-      const possible = Math.floor((width + gap) / (min + gap));
+      // Fit formula: cols * min + (cols-1) * gap <= (width - safety)
+      // safety accounts for rounding, scrollbars, and border/padding quirks.
+      const available = Math.max(0, width - safety);
+      const possible = Math.floor((available + gap) / (min + gap));
       const next = Math.min(max, Math.max(1, possible));
       setCols(next);
     }

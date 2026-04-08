@@ -23,7 +23,10 @@
 
   html, body {
     width: 100%;
-    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
   }
 
   /* Make native select dropdown menus readable in both themes */
@@ -118,7 +121,9 @@
 
 .card-grid {
   display: grid;
-  /* Responsive: if tiles can't fit, grid naturally falls back to fewer columns */
+  width: 100%;
+  max-width: 100%;
+  /* Responsive fallback; some pages override columns via inline style */
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min)), 1fr));
   gap: 12px;
 }

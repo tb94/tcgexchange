@@ -86,15 +86,16 @@ export default function Layout() {
         <div className="mt-6 grid gap-3">
           <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">
             <div className="mb-2 font-semibold text-slate-700 dark:text-slate-200">Card size</div>
-            <select
+            <input
               className="input"
-              value={cardSize.size}
-              onChange={(e) => cardSize.setSize(e.target.value)}
-            >
-              <option value="sm">Small</option>
-              <option value="md">Medium</option>
-              <option value="lg">Large</option>
-            </select>
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={cardSize.scale}
+              onChange={(e) => cardSize.setScale(Number(e.target.value))}
+              aria-label="Card size"
+            />
           </div>
 
           <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">
@@ -165,15 +166,17 @@ export default function Layout() {
 
           <div className="flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
             <div className="text-slate-700 dark:text-slate-200">Card size</div>
-            <select
-              className="rounded-lg border border-slate-900/10 bg-white/70 px-2 py-1 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
-              value={cardSize.size}
-              onChange={(e) => cardSize.setSize(e.target.value)}
-            >
-              <option value="sm">Small</option>
-              <option value="md">Medium</option>
-              <option value="lg">Large</option>
-            </select>
+            <input
+              className="h-2 w-36 accent-sky-600 dark:accent-cyan-400"
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={cardSize.scale}
+              onChange={(e) => cardSize.setScale(Number(e.target.value))}
+              aria-label="Card size"
+              title="Card size"
+            />
           </div>
 
           <div className="flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">

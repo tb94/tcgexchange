@@ -1,19 +1,22 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const CollectionItem = sequelize.define('CollectionItem', {
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     cardId: {
       type: DataTypes.STRING,
       allowNull: false
     },
     condition: {
-      type: DataTypes.ENUM('NM', 'LP', 'MP', 'HP', 'DMG'),
+      type: DataTypes.TEXT,
       allowNull: false,
       defaultValue: 'NM'
     },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 1,
-      validate: { min: 1 }
+      defaultValue: 1
     },
     notes: {
       type: DataTypes.TEXT,

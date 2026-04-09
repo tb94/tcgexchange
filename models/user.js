@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     username: {
       type: DataTypes.STRING,
@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   });
+
+  User.associate = (models) => {
+    User.hasMany(models.CollectionItem, { foreignKey: 'userId', onDelete: 'CASCADE' });
+    User.hasMany(models.WishlistItem, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  };
 
   return User;
 };

@@ -1,27 +1,26 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const CardCache = sequelize.define('CardCache', {
     id: {
-      // PokemonTCG card id (e.g. "basep-1")
       type: DataTypes.STRING,
-      primaryKey: true,
+      primaryKey: true
+    },
+    name: {
+      type: DataTypes.STRING,
       allowNull: false
     },
-    name: { type: DataTypes.STRING, allowNull: false },
-    setId: { type: DataTypes.STRING, allowNull: true },
-    setName: { type: DataTypes.STRING, allowNull: true },
-    number: { type: DataTypes.STRING, allowNull: true },
-    hp: { type: DataTypes.STRING, allowNull: true },
-    rarity: { type: DataTypes.STRING, allowNull: true },
-    supertype: { type: DataTypes.STRING, allowNull: true },
-    subtypesJson: { type: DataTypes.TEXT, allowNull: true },
-    typesJson: { type: DataTypes.TEXT, allowNull: true },
-    imageSmall: { type: DataTypes.STRING, allowNull: true },
-    imageLarge: { type: DataTypes.STRING, allowNull: true },
-    setSeries: { type: DataTypes.STRING, allowNull: true },
-    setReleaseDate: { type: DataTypes.STRING, allowNull: true },
-    setPrintedTotal: { type: DataTypes.INTEGER, allowNull: true }
-  }, {
-    tableName: 'CardCaches'
+    setId: DataTypes.STRING,
+    setName: DataTypes.STRING,
+    setSeries: DataTypes.STRING,
+    setReleaseDate: DataTypes.STRING,
+    setPrintedTotal: DataTypes.INTEGER,
+    number: DataTypes.STRING,
+    hp: DataTypes.STRING,
+    rarity: DataTypes.STRING,
+    supertype: DataTypes.STRING,
+    subtypesJson: DataTypes.TEXT,
+    typesJson: DataTypes.TEXT,
+    imageSmall: DataTypes.STRING,
+    imageLarge: DataTypes.STRING
   });
 
   return CardCache;

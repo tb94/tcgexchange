@@ -1,12 +1,12 @@
-const express = require('express');
-const authMiddleware = require('../middlewares/auth');
-const wishlistController = require('../controllers/wishlistController');
+import express from 'express';
+import authMiddleware from '../middlewares/auth.js';
+import wishlistController from '../controllers/wishlistController.js';
 
 const router = express.Router();
 
 router.get('/', authMiddleware, wishlistController.list);
-router.post('/', authMiddleware, wishlistController.add);
+router.post('/', authMiddleware, wishlistController.create);
 router.put('/:id', authMiddleware, wishlistController.update);
 router.delete('/:id', authMiddleware, wishlistController.remove);
 
-module.exports = router;
+export default router;

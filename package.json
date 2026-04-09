@@ -2,6 +2,7 @@
     "name": "tcgexchange",
     "version": "0.0.1",
     "description": "TCG Portfolio Sharing",
+    "type": "module",
     "main": "src/server.js",
     "scripts": {
         "dev": "node src/server.js",

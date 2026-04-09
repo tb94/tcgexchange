@@ -188,7 +188,14 @@ function convertIdsToNames(ids = []) {
   return ids.map(getSetNameById).filter(Boolean);
 }
 
-module.exports = {
+export {
+  getSetIdByName,
+  getSetNameById,
+  convertNamesToIds,
+  convertIdsToNames
+};
+
+export default {
   getSetIdByName,
   getSetNameById,
   convertNamesToIds,

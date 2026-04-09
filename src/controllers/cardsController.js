@@ -1,11 +1,13 @@
-const { validationResult } = require('express-validator');
-const { body } = require('express-validator');
-require('dotenv').config();
-const axios = require('axios');
-const setConverter = require('../util/setConverter');
+import { body, validationResult } from 'express-validator';
+import 'dotenv/config';
+import axios from 'axios';
+import { Op } from 'sequelize';
+
+import setConverter from '../util/setConverter.js';
+import { CardCache } from '../../models/index.js';
 
 // Input validation
-exports.searchValidation = [
+const searchValidation = [
   body('filters.name').optional().isString().withMessage('name must be a string'),
   body('filters.sets').optional().isArray().withMessage('set must be an array'),
   body('filters.sets.*').optional().isString().withMessage('each set must be a string'),
@@ -39,145 +41,96 @@ exports.searchValidation = [
   body('filters.legalities.*').optional().isString().withMessage('each legality must be a string'),
 
   body('page').optional().isInt({ min: 1 }),
-  body('pageSize').optional().isInt({ min: 1, max: 100 }) // Limit to 100 results per page
+  body('pageSize').optional().isInt({ min: 1, max: 100 })
 ];
 
 // format search parameters into a query string for pokemontcg.io API
 function buildQueryString(filters) {
   const queryParts = [];
 
-  // if no filters are provided, return an empty string
-  if (!filters || Object.keys(filters).length === 0) {
-    return '';
-  }
+  if (!filters || Object.keys(filters).length === 0) return '';
 
-  // Iterate over filters and build query string
-
-  // name: `(name:Pikachu)`
   if (filters.name && filters.name.trim() !== '') {
     queryParts.push(`name:"${filters.name}"`);
   }
 
-  // set: [] `(set.id:base1 OR set.id:base4)`
   if (filters.sets && filters.sets.length > 0) {
     queryParts.push(`(${setConverter.convertNamesToIds(filters.sets).map((set) => `set.id:${set}`).join(' OR ')})`);
   }
 
-  // types: [] `(types:grass OR types:fire)`
   if (filters.types && filters.types.length > 0) {
     queryParts.push(`(${filters.types.map((type) => `types:${type}`).join(' OR ')})`);
   }
 
-  // case insensitivity through the API means we can't search for "ex"
-  // without also searching for "EX" - probably leave this out until we can figure out a plan.
-  // subtypes: [] `(subtypes:stage2 OR subtypes:ex)`
-  // if (filters.subtypes && filters.subtypes.length > 0) {
-  //     const subtypeQuery = filters.subtypes.map(subtype => `subtypes:${subtype}`).join(' OR ');
-  //     queryParts.push(`(${subtypeQuery})`);
-  // }
-
-  // supertype: [] `(supertype:Pokémon OR supertype:Trainer)`
   if (filters.supertypes && filters.supertypes.length > 0) {
     queryParts.push(`(${filters.supertypes.map((supertype) => `supertype:${supertype}`).join(' OR ')})`);
   }
 
-  // rarity: [] `(rarity:"Double Rare" OR rarity:"Hyper Rare")`
   if (filters.rarities && filters.rarities.length > 0) {
     queryParts.push(`(${filters.rarities.map((rarity) => `rarity:"${rarity}"`).join(' OR ')})`);
   }
 
-  // regulationMark: [] `(regulationMark:D OR regulationMark:E)`
   if (filters.regulationMarks && filters.regulationMarks.length > 0) {
     queryParts.push(`(${filters.regulationMarks.map((mark) => `regulationMark:${mark}`).join(' OR ')})`);
   }
 
-  // hp: { gte: 50, lte: 100 } `hp:[50 TO 100]`
-  if (filters.hp.gte !== undefined || filters.hp.lte !== undefined) {
+  if (filters.hp?.gte !== undefined || filters.hp?.lte !== undefined) {
     queryParts.push(`hp:[${filters.hp.gte || '*'} TO ${filters.hp.lte || '*'}]`);
   }
 
-  // retreatCost: { gte: 1, lte: 3 } `retreatCost:[1 TO 3]`
   if (filters.retreatCost?.gte !== undefined || filters.retreatCost?.lte !== undefined) {
     queryParts.push(`convertedRetreatCost:[${filters.retreatCost.gte || '*'} TO ${filters.retreatCost.lte || '*'}]`);
   }
 
-  // attack energy cost: { gte: 1, lte: 3 } `attacks.convertedEnergyCost:[1 TO 3]`
-  if (filters.attackCost.gte !== undefined || filters.attackCost.lte !== undefined) {
+  if (filters.attackCost?.gte !== undefined || filters.attackCost?.lte !== undefined) {
     queryParts.push(`attacks.convertedEnergyCost:[${filters.attackCost.gte || '*'} TO ${filters.attackCost.lte || '*'}]`);
   }
 
-  // nationalPokedexNumber: `nationalPokedexNumber:25`
   if (filters.nationalPokedexNumber) {
     queryParts.push(`nationalPokedexNumbers:${filters.nationalPokedexNumber}`);
   }
 
-  // cardnumber: `number:125`
   if (filters.cardnumber) {
     queryParts.push(`number:${filters.cardnumber}`);
   }
 
-  // artist: `artist:"John Doe~"`
   if (filters.artist) {
-    queryParts.push(`artist:"${filters.artist}~"`);
+    queryParts.push(`artist:"${filters.artist}"`);
   }
 
-  // text: `flavorText:"trees"`
   if (filters.text) {
-    queryParts.push(`flavorText:"${filters.text}"`);
+    queryParts.push(`text:"${filters.text}"`);
   }
 
-  // level: `level:17`
   if (filters.level) {
     queryParts.push(`level:${filters.level}`);
   }
 
-  // weaknesses: [] `(weaknesses.type:water OR weaknesses.type:fire)`
   if (filters.weaknesses && filters.weaknesses.length > 0) {
-    queryParts.push(`(${filters.weaknesses.map((weakness) => `weaknesses.type:${weakness}`).join(' OR ')})`);
+    queryParts.push(`(${filters.weaknesses.map((w) => `weaknesses.type:${w}`).join(' OR ')})`);
   }
 
-  // resistance: [] `(resistances.type:water OR resistances.type:fire)`
   if (filters.resistances && filters.resistances.length > 0) {
-    queryParts.push(`(${filters.resistances.map((resistance) => `resistances.type:${resistance}`).join(' OR ')})`);
+    queryParts.push(`(${filters.resistances.map((r) => `resistances.type:${r}`).join(' OR ')})`);
   }
 
-  // legalities: [] `(legalities.standard:legal OR legalities.expanded:legal)`
   if (filters.legalities && filters.legalities.length > 0) {
     queryParts.push(`(${filters.legalities.map((legality) => `legalities.${legality.toLowerCase()}:Legal`).join(' OR ')})`);
   }
 
-  //  I don't understand the pricing for the tcgplayer and cardmarket objects yet
-  // tcgplayer.prices: { gte: 15, lte: 30 }
-  // if (filters.tcgplayer) {}
-
-  // cardmarket.prices: { gte: 15, lte: 30 }
-
   return queryParts.join(' ');
 }
 
-// Search external api for cards
-exports.searchCards = async (req, res) => {
-  // Handle validation errors
+async function searchCards(req, res) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  // Extract filters from request body
-  const {
-    filters,
-    sort = 'name',
-    page = 1,
-    pageSize = 20
-  } = req.body;
+  const { filters, sort = 'name', page = 1, pageSize = 20 } = req.body;
 
   try {
-    // Build query string for PokémonTCG API
     const query = buildQueryString(filters);
 
-    // API Request
     const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
-      // Note: This API appears to return 404 unless Accept is explicitly application/json.
       headers: {
         Accept: 'application/json',
         'X-Api-Key': process.env.POKEMON_TCG_API_KEY
@@ -195,26 +148,13 @@ exports.searchCards = async (req, res) => {
     console.error('Error fetching cards:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
-};
+}
 
-// Local search backed by CardCache (static dataset)
-exports.searchCardsLocal = async (req, res) => {
+async function searchCardsLocal(req, res) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  // eslint-disable-next-line global-require
-  const { Op } = require('sequelize');
-  // eslint-disable-next-line global-require
-  const { CardCache } = require('../../models');
-
-  const {
-    filters,
-    sort = 'name',
-    page = 1,
-    pageSize = 20
-  } = req.body;
+  const { filters, sort = 'name', page = 1, pageSize = 20 } = req.body;
 
   try {
     const where = {};
@@ -223,13 +163,9 @@ exports.searchCardsLocal = async (req, res) => {
       where.name = { [Op.like]: `%${filters.name.trim()}%` };
     }
 
-    // sets are provided as set *names* in the UI (e.g., "151"),
-    // but CardCache stores both setName (human readable) and setId (api id like "sv3pt5").
-    // Accept either names OR ids from the client to avoid mismatch issues.
     if (filters?.sets && Array.isArray(filters.sets) && filters.sets.length > 0) {
       const setVals = filters.sets.map((s) => String(s).trim()).filter(Boolean);
 
-      // Convert known names -> ids via our mapping.
       let mappedIds = [];
       try {
         mappedIds = setConverter.convertNamesToIds(setVals);
@@ -237,7 +173,6 @@ exports.searchCardsLocal = async (req, res) => {
         mappedIds = [];
       }
 
-      // Also treat raw values that look like ids as ids (e.g., "sv3pt5").
       const looksLikeSetId = (x) => /^[a-z0-9]+$/i.test(x) && x.length <= 12;
       const directIds = setVals.filter(looksLikeSetId);
 
@@ -257,15 +192,12 @@ exports.searchCardsLocal = async (req, res) => {
       where.supertype = { [Op.in]: filters.supertypes };
     }
 
-    // types: stored as JSON string; simple LIKE match
-    // Example stored: ["Fire","Colorless"]
     if (filters?.types && Array.isArray(filters.types) && filters.types.length > 0) {
       where.typesJson = {
         [Op.and]: filters.types.map((t) => ({ [Op.like]: `%"${t}"%` }))
       };
     }
 
-    // Sort mapping: allow a few fields
     const order = [];
     if (sort === 'name') order.push(['name', 'ASC']);
     else if (sort === '-name') order.push(['name', 'DESC']);
@@ -276,12 +208,7 @@ exports.searchCardsLocal = async (req, res) => {
     const limit = Math.min(Number(pageSize) || 20, 100);
     const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
 
-    const rows = await CardCache.findAll({
-      where,
-      limit,
-      offset,
-      order
-    });
+    const rows = await CardCache.findAll({ where, limit, offset, order });
 
     const cards = rows.map((r) => ({
       id: r.id,
@@ -305,16 +232,10 @@ exports.searchCardsLocal = async (req, res) => {
     console.error('Local search failed:', err);
     return res.status(500).json({ error: 'Local search failed' });
   }
-};
+}
 
-// List sets from local CardCache (for populating the Sets filter UI)
-exports.listSetsLocal = async (req, res) => {
+async function listSetsLocal(req, res) {
   try {
-    // eslint-disable-next-line global-require
-    const { Op } = require('sequelize');
-    // eslint-disable-next-line global-require
-    const { CardCache } = require('../../models');
-
     const rows = await CardCache.findAll({
       attributes: ['setId', 'setName'],
       where: {
@@ -329,9 +250,7 @@ exports.listSetsLocal = async (req, res) => {
         id: r.setId,
         name: r.setName || r.setId
       }))
-      // avoid blanks
       .filter((s) => s.id && s.id.trim() !== '')
-      // stable sort if some names are null
       .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
     return res.json({ sets });
@@ -339,10 +258,9 @@ exports.listSetsLocal = async (req, res) => {
     console.error('listSetsLocal failed:', err);
     return res.status(500).json({ error: 'Failed to list sets' });
   }
-};
+}
 
-// Bulk card lookup (prefer local CardCache; fall back to external API for misses)
-exports.getCardsByIds = async (req, res) => {
+async function getCardsByIds(req, res) {
   const { ids } = req.body;
 
   if (!Array.isArray(ids) || ids.length === 0) {
@@ -352,9 +270,6 @@ exports.getCardsByIds = async (req, res) => {
   const uniqueIds = Array.from(new Set(ids)).slice(0, 250);
 
   try {
-    // eslint-disable-next-line global-require
-    const { CardCache } = require('../../models');
-
     const rows = await CardCache.findAll({ where: { id: uniqueIds } });
 
     const map = {};
@@ -376,7 +291,6 @@ exports.getCardsByIds = async (req, res) => {
       return res.json({ cards: map, source: 'local' });
     }
 
-    // External fallback
     const q = `id:(${missing.map((x) => `\"${x}\"`).join(' OR ')})`;
     const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
       headers: {
@@ -406,16 +320,12 @@ exports.getCardsByIds = async (req, res) => {
     console.error('Error fetching cards by ids:', err?.response?.status || err?.message);
     return res.status(502).json({ error: 'Failed to fetch card data' });
   }
-};
+}
 
-// Get a card by ID from local CardCache
-exports.getCardByIdLocal = async (req, res) => {
+async function getCardByIdLocal(req, res) {
   const { id } = req.params;
 
   try {
-    // eslint-disable-next-line global-require
-    const { CardCache } = require('../../models');
-
     const r = await CardCache.findByPk(id);
     if (!r) return res.status(404).json({ error: 'Card not found (local)' });
 
@@ -451,14 +361,12 @@ exports.getCardByIdLocal = async (req, res) => {
     console.error('getCardByIdLocal failed:', err);
     return res.status(500).json({ error: 'Failed to fetch card (local)' });
   }
-};
+}
 
-// Get a card by ID from the external API
-exports.getCardById = async (req, res) => {
+async function getCardById(req, res) {
   const { id } = req.params;
 
   try {
-    // API Request
     const response = await axios.get(`https://api.pokemontcg.io/v2/cards/${id}`, {
       headers: {
         Accept: 'application/json',
@@ -475,4 +383,14 @@ exports.getCardById = async (req, res) => {
     console.error('Error fetching card by ID:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
+}
+
+export default {
+  searchValidation,
+  searchCards,
+  searchCardsLocal,
+  listSetsLocal,
+  getCardsByIds,
+  getCardByIdLocal,
+  getCardById
 };

@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../api';
 
 export default function CardDetail() {
   const { id } = useParams();
+  const location = useLocation();
+  const nav = useNavigate();
+  const backTo = location.state?.from || '/app/search';
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
@@ -82,7 +85,16 @@ export default function CardDetail() {
               Uses <span className="font-mono">/cards/local/:id</span>
             </div>
           </div>
-          <Link className="btn btn-ghost" to="/app/search">Back to search</Link>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              if (location.state?.from) nav(-1);
+              else nav(backTo);
+            }}
+          >
+            Back to results
+          </button>
         </div>
 
         {loading && <div className="mt-4 text-slate-600 dark:text-slate-400">Loading…</div>}

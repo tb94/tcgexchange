@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { apiRequest } from '../api';
 import { useCardSize } from '../cardSize.jsx';
 import { useGridCols } from '../gridCols.jsx';
@@ -28,6 +28,7 @@ function CardTile({ card, selectMode, selected, onToggleSelected }) {
 
       <Link
         to={`/app/cards/${encodeURIComponent(card.id)}`}
+        state={{ from: `${location.pathname}${location.search}` }}
         className={
           `group block rounded-2xl border bg-white/70 p-3 hover:shadow-md dark:bg-white/5 ` +
           (selected ? 'border-neonCyan/60 ring-4 ring-neonCyan/10' : 'border-slate-900/10 dark:border-white/10')
@@ -61,15 +62,24 @@ function CardTile({ card, selectMode, selected, onToggleSelected }) {
 }
 
 export default function Search() {
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [sets, setSets] = useState([]);
   const [loadingSets, setLoadingSets] = useState(true);
 
-  const [nameInput, setNameInput] = useState('');
-  const [nameQuery, setNameQuery] = useState('');
-  const [setId, setSetId] = useState('');
-  const [rarity, setRarity] = useState('');
-  const [supertype, setSupertype] = useState('');
-  const [type, setType] = useState('');
+  const initialName = searchParams.get('name') || '';
+  const initialSet = searchParams.get('set') || '';
+  const initialRarity = searchParams.get('rarity') || '';
+  const initialSupertype = searchParams.get('supertype') || '';
+  const initialType = searchParams.get('type') || '';
+
+  const [nameInput, setNameInput] = useState(initialName);
+  const [nameQuery, setNameQuery] = useState(initialName);
+  const [setId, setSetId] = useState(initialSet);
+  const [rarity, setRarity] = useState(initialRarity);
+  const [supertype, setSupertype] = useState(initialSupertype);
+  const [type, setType] = useState(initialType);
 
   const [page, setPage] = useState(1);
   const [pageSize] = useState(24);
@@ -101,6 +111,23 @@ export default function Search() {
     safetyPx: 20
   });
 
+  // If URL search params change (back/forward navigation), hydrate UI state.
+  useEffect(() => {
+    const n = searchParams.get('name') || '';
+    const s = searchParams.get('set') || '';
+    const r = searchParams.get('rarity') || '';
+    const st = searchParams.get('supertype') || '';
+    const t = searchParams.get('type') || '';
+
+    setNameInput(n);
+    setNameQuery(n);
+    setSetId(s);
+    setRarity(r);
+    setSupertype(st);
+    setType(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
+
   // Debounce name input to avoid hammering the API while typing.
   useEffect(() => {
     const t = setTimeout(() => {
@@ -108,6 +135,17 @@ export default function Search() {
     }, 800);
     return () => clearTimeout(t);
   }, [nameInput]);
+
+  // Persist current filters into the URL so leaving CardDetail and coming back keeps your search.
+  useEffect(() => {
+    const next = {};
+    if (nameQuery) next.name = nameQuery;
+    if (setId) next.set = setId;
+    if (rarity) next.rarity = rarity;
+    if (supertype) next.supertype = supertype;
+    if (type) next.type = type;
+    setSearchParams(next, { replace: true });
+  }, [nameQuery, rarity, setId, supertype, type, setSearchParams]);
 
   const filters = useMemo(() => {
     const f = {};

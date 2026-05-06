@@ -9,6 +9,48 @@ function uniq(arr) {
   return Array.from(new Set(arr));
 }
 
+const RARITY_OPTIONS = ['Common', 'Uncommon', 'Rare', 'Rare Holo', 'Double Rare', 'Illustration Rare', 'Special Illustration Rare', 'Hyper Rare'];
+const SUPERTYPE_OPTIONS = ['Pokémon', 'Trainer', 'Energy'];
+const TYPE_OPTIONS = ['Colorless', 'Darkness', 'Dragon', 'Fairy', 'Fighting', 'Fire', 'Grass', 'Lightning', 'Metal', 'Psychic', 'Water'];
+
+function csvParam(searchParams, key) {
+  return (searchParams.get(key) || '').split(',').map((v) => v.trim()).filter(Boolean);
+}
+
+function toggleValue(values, value) {
+  return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
+}
+
+function CheckboxGroup({ title, options, selected, onChange }) {
+  const allSelected = options.length > 0 && selected.length === options.length;
+  return (
+    <div className="rounded-xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">{title}</div>
+        <button
+          className="text-xs font-semibold text-sky-700 dark:text-cyan-300"
+          type="button"
+          onClick={() => onChange(allSelected ? [] : options)}
+        >
+          {allSelected ? 'Clear all' : 'Select all'}
+        </button>
+      </div>
+      <div className="mt-2 grid max-h-52 gap-2 overflow-auto pr-1">
+        {options.map((option) => (
+          <label key={option} className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={selected.includes(option)}
+              onChange={() => onChange(toggleValue(selected, option))}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CardTile({ card, selectMode, selected, onToggleSelected }) {
   return (
     <div className="relative">
@@ -69,17 +111,18 @@ export default function Search() {
   const [loadingSets, setLoadingSets] = useState(true);
 
   const initialName = searchParams.get('name') || '';
-  const initialSet = searchParams.get('set') || '';
-  const initialRarity = searchParams.get('rarity') || '';
-  const initialSupertype = searchParams.get('supertype') || '';
-  const initialType = searchParams.get('type') || '';
+  const initialSetIds = csvParam(searchParams, 'set');
+  const initialRarities = csvParam(searchParams, 'rarity');
+  const initialSupertypes = csvParam(searchParams, 'supertype');
+  const initialTypes = csvParam(searchParams, 'type');
 
   const [nameInput, setNameInput] = useState(initialName);
   const [nameQuery, setNameQuery] = useState(initialName);
-  const [setId, setSetId] = useState(initialSet);
-  const [rarity, setRarity] = useState(initialRarity);
-  const [supertype, setSupertype] = useState(initialSupertype);
-  const [type, setType] = useState(initialType);
+  const [setIds, setSetIds] = useState(initialSetIds);
+  const [rarities, setRarities] = useState(initialRarities);
+  const [supertypes, setSupertypes] = useState(initialSupertypes);
+  const [types, setTypes] = useState(initialTypes);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [page, setPage] = useState(1);
   const [pageSize] = useState(24);
@@ -114,17 +157,17 @@ export default function Search() {
   // If URL search params change (back/forward navigation), hydrate UI state.
   useEffect(() => {
     const n = searchParams.get('name') || '';
-    const s = searchParams.get('set') || '';
-    const r = searchParams.get('rarity') || '';
-    const st = searchParams.get('supertype') || '';
-    const t = searchParams.get('type') || '';
+    const nextSets = csvParam(searchParams, 'set');
+    const nextRarities = csvParam(searchParams, 'rarity');
+    const nextSupertypes = csvParam(searchParams, 'supertype');
+    const nextTypes = csvParam(searchParams, 'type');
 
     setNameInput(n);
     setNameQuery(n);
-    setSetId(s);
-    setRarity(r);
-    setSupertype(st);
-    setType(t);
+    setSetIds(nextSets);
+    setRarities(nextRarities);
+    setSupertypes(nextSupertypes);
+    setTypes(nextTypes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 
@@ -140,22 +183,22 @@ export default function Search() {
   useEffect(() => {
     const next = {};
     if (nameQuery) next.name = nameQuery;
-    if (setId) next.set = setId;
-    if (rarity) next.rarity = rarity;
-    if (supertype) next.supertype = supertype;
-    if (type) next.type = type;
+    if (setIds.length) next.set = setIds.join(',');
+    if (rarities.length) next.rarity = rarities.join(',');
+    if (supertypes.length) next.supertype = supertypes.join(',');
+    if (types.length) next.type = types.join(',');
     setSearchParams(next, { replace: true });
-  }, [nameQuery, rarity, setId, supertype, type, setSearchParams]);
+  }, [nameQuery, rarities, setIds, setSearchParams, supertypes, types]);
 
   const filters = useMemo(() => {
     const f = {};
     if (nameQuery) f.name = nameQuery;
-    if (setId) f.sets = [setId];
-    if (rarity) f.rarities = [rarity];
-    if (supertype) f.supertypes = [supertype];
-    if (type) f.types = [type];
+    if (setIds.length) f.sets = setIds;
+    if (rarities.length) f.rarities = rarities;
+    if (supertypes.length) f.supertypes = supertypes;
+    if (types.length) f.types = types;
     return f;
-  }, [nameQuery, rarity, setId, supertype, type]);
+  }, [nameQuery, rarities, setIds, supertypes, types]);
 
   async function loadSets() {
     setLoadingSets(true);
@@ -228,6 +271,7 @@ export default function Search() {
   }
 
   const selectedCount = selectedIds.size;
+  const activeFilterCount = (nameQuery ? 1 : 0) + setIds.length + rarities.length + supertypes.length + types.length;
 
   async function openBulk(which) {
     const ids = Array.from(selectedIds);
@@ -379,58 +423,58 @@ export default function Search() {
 
         {err && <div className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{err}</div>}
 
-        <div className="mt-4 grid gap-3 md:grid-cols-5">
-          <div className="md:col-span-2">
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Name</label>
-            <input className="input mt-1" value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Pikachu" />
-          </div>
+        <div className="mt-4 rounded-2xl border border-slate-900/10 bg-white/50 dark:border-white/10 dark:bg-white/5">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+          >
+            <div>
+              <div className="font-semibold">Filters</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">
+                {activeFilterCount ? `${activeFilterCount} active` : 'Name, set, rarity, supertype, and type'}
+              </div>
+            </div>
+            <span className="text-xl leading-none">{filtersOpen ? '−' : '+'}</span>
+          </button>
 
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Set</label>
-            <select className="input mt-1" value={setId} onChange={(e) => setSetId(e.target.value)} disabled={loadingSets}>
-              <option value="">Any</option>
-              {sets.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.id})
-                </option>
-              ))}
-            </select>
-          </div>
+          {filtersOpen && (
+            <div className="grid gap-3 border-t border-slate-900/10 p-4 dark:border-white/10 md:grid-cols-5">
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Name</label>
+                <input className="input mt-1" value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Pikachu" />
+              </div>
 
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Rarity</label>
-            <select className="input mt-1" value={rarity} onChange={(e) => setRarity(e.target.value)}>
-              <option value="">Any</option>
-              <option>Common</option>
-              <option>Uncommon</option>
-              <option>Rare</option>
-              <option>Rare Holo</option>
-              <option>Double Rare</option>
-              <option>Illustration Rare</option>
-              <option>Special Illustration Rare</option>
-              <option>Hyper Rare</option>
-            </select>
-          </div>
+              <CheckboxGroup
+                title="Set"
+                options={sets.map((s) => s.id)}
+                selected={setIds}
+                onChange={setSetIds}
+              />
 
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Supertype</label>
-            <select className="input mt-1" value={supertype} onChange={(e) => setSupertype(e.target.value)}>
-              <option value="">Any</option>
-              <option>Pokémon</option>
-              <option>Trainer</option>
-              <option>Energy</option>
-            </select>
-          </div>
+              <CheckboxGroup
+                title="Rarity"
+                options={RARITY_OPTIONS}
+                selected={rarities}
+                onChange={setRarities}
+              />
 
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Type</label>
-            <select className="input mt-1" value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="">Any</option>
-              {['Colorless', 'Darkness', 'Dragon', 'Fairy', 'Fighting', 'Fire', 'Grass', 'Lightning', 'Metal', 'Psychic', 'Water'].map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </div>
+              <CheckboxGroup
+                title="Supertype"
+                options={SUPERTYPE_OPTIONS}
+                selected={supertypes}
+                onChange={setSupertypes}
+              />
+
+              <CheckboxGroup
+                title="Type"
+                options={TYPE_OPTIONS}
+                selected={types}
+                onChange={setTypes}
+              />
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3 text-sm">
@@ -440,10 +484,10 @@ export default function Search() {
             onClick={() => {
               setNameInput('');
               setNameQuery('');
-              setSetId('');
-              setRarity('');
-              setSupertype('');
-              setType('');
+              setSetIds([]);
+              setRarities([]);
+              setSupertypes([]);
+              setTypes([]);
             }}
           >
             Clear

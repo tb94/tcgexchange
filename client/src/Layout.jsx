@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { clearToken, getToken } from './api';
+import { apiRequest, clearToken, getToken } from './api';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import { useTheme } from './theme';
 import { useCardSize } from './cardSize.jsx';
@@ -27,6 +27,33 @@ export default function Layout() {
   const cardSize = useCardSize();
   const gridCols = useGridCols();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (!token) {
+      setUser(null);
+      return;
+    }
+
+    let cancelled = false;
+    apiRequest('/auth/me')
+      .then((res) => {
+        if (!cancelled) setUser(res.user || null);
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, location.pathname]);
+
+  function logout() {
+    clearToken();
+    setUser(null);
+    nav('/app/login');
+  }
 
   // Close the drawer when route changes
   useEffect(() => {
@@ -121,10 +148,7 @@ export default function Layout() {
             <button
               className="btn btn-primary"
               type="button"
-              onClick={() => {
-                clearToken();
-                nav('/app/login');
-              }}
+              onClick={logout}
             >
               Log out
             </button>
@@ -134,13 +158,12 @@ export default function Layout() {
         </div>
       </aside>
 
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center justify-between gap-3">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            {/* Hamburger (mobile only) */}
             <button
               type="button"
-              className="btn btn-ghost md:hidden"
+              className="btn btn-ghost"
               aria-label="Open menu"
               onClick={() => setMenuOpen(true)}
             >
@@ -157,58 +180,17 @@ export default function Layout() {
           </div>
         </div>
 
-        {/* Desktop nav */}
-        <div className="hidden flex-wrap items-center gap-2 md:flex">
-          <NavItem to="/app/search">Search</NavItem>
-          <NavItem to="/app/collection">Collection</NavItem>
-          <NavItem to="/app/wishlist">Wishlist</NavItem>
-          <NavItem to="/app/trades">Trades</NavItem>
-          <NavItem to="/app/profile">Profile</NavItem>
-
-          <div className="flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-            <div className="text-slate-700 dark:text-slate-200">Card size</div>
-            <input
-              className="h-2 w-36 accent-sky-600 dark:accent-cyan-400"
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={cardSize.scale}
-              onChange={(e) => cardSize.setScale(Number(e.target.value))}
-              aria-label="Card size"
-              title="Card size"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-            <div className="text-slate-700 dark:text-slate-200">Grid</div>
-            <select
-              className="rounded-lg border border-slate-900/10 bg-white/70 px-2 py-1 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
-              value={gridCols.maxCols}
-              onChange={(e) => gridCols.setMaxCols(Number(e.target.value))}
-              title="Max columns"
-            >
-              <option value={99}>Auto</option>
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-
-          <ThemeToggle theme={theme.theme} onToggle={theme.toggle} />
-
+        <div className="flex shrink-0 items-center gap-2">
           {token ? (
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                clearToken();
-                nav('/app/login');
-              }}
+            <Link
+              className="rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm font-semibold dark:border-white/10 dark:bg-white/5"
+              to="/app/profile"
+              title="Profile"
             >
-              Log out
-            </button>
+              {user?.username || 'Account'}
+            </Link>
           ) : (
-            <Link className="btn btn-ghost" to="/app/login">Log in</Link>
+            <Link className="btn btn-primary" to="/app/login">Log in</Link>
           )}
         </div>
       </div>

@@ -8,7 +8,9 @@
         "dev": "node src/server.js",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "import:cards": "node scripts/import_cards.js"
+        "import:cards": "node scripts/import_cards.js",
+        "seed:matching-fixture": "node scripts/seed_matching_fixture.js",
+        "seed:matching-fixture:preview": "node scripts/seed_matching_fixture.js --preview"
     },
     "author": "Tim Bretz & Kyle LaPointe",
     "license": "ISC",

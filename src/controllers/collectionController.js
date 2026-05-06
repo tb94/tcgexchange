@@ -1,20 +1,20 @@
-const { CollectionItem } = require('../../models');
+import { CollectionItem } from '../../models/index.js';
 
 const VALID_CONDITIONS = new Set(['NM', 'LP', 'MP', 'HP', 'DMG']);
 
-exports.list = async (req, res) => {
+async function list(req, res) {
   try {
     const items = await CollectionItem.findAll({
-      where: { userId: req.user.userId },
+      where: { userId: req.user.id },
       order: [['updatedAt', 'DESC']]
     });
     return res.json({ items });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
 
-exports.add = async (req, res) => {
+async function create(req, res) {
   try {
     const { cardId, condition = 'NM', quantity = 1, notes = null } = req.body;
     if (!cardId) return res.status(400).json({ error: 'cardId required' });
@@ -24,7 +24,7 @@ exports.add = async (req, res) => {
 
     // If same cardId+condition exists, increment quantity
     const existing = await CollectionItem.findOne({
-      where: { userId: req.user.userId, cardId, condition }
+      where: { userId: req.user.id, cardId, condition }
     });
 
     if (existing) {
@@ -37,7 +37,7 @@ exports.add = async (req, res) => {
     }
 
     const item = await CollectionItem.create({
-      userId: req.user.userId,
+      userId: req.user.id,
       cardId,
       condition,
       quantity: qty,
@@ -48,14 +48,14 @@ exports.add = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
 
-exports.update = async (req, res) => {
+async function update(req, res) {
   try {
     const id = Number(req.params.id);
     const { quantity, condition, notes } = req.body;
 
-    const item = await CollectionItem.findOne({ where: { id, userId: req.user.userId } });
+    const item = await CollectionItem.findOne({ where: { id, userId: req.user.id } });
     if (!item) return res.status(404).json({ error: 'not found' });
 
     if (condition !== undefined) {
@@ -78,16 +78,23 @@ exports.update = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
 
-exports.remove = async (req, res) => {
+async function remove(req, res) {
   try {
     const id = Number(req.params.id);
-    const item = await CollectionItem.findOne({ where: { id, userId: req.user.userId } });
+    const item = await CollectionItem.findOne({ where: { id, userId: req.user.id } });
     if (!item) return res.status(404).json({ error: 'not found' });
     await item.destroy();
     return res.json({ ok: true });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
+}
+
+export default {
+  list,
+  create,
+  update,
+  remove
 };

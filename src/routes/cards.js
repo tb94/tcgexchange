@@ -1,21 +1,13 @@
-const express = require('express');
-const cardsController = require('../controllers/cardsController');
+import express from 'express';
+import cardsController from '../controllers/cardsController.js';
 
 const router = express.Router();
 
 // Card Search Endpoint (external API)
-router.post(
-  '/search',
-  cardsController.searchValidation,
-  cardsController.searchCards
-);
+router.post('/search', cardsController.searchValidation, cardsController.searchCards);
 
 // Local search endpoint (CardCache)
-router.post(
-  '/search_local',
-  cardsController.searchValidation,
-  cardsController.searchCardsLocal
-);
+router.post('/search_local', cardsController.searchValidation, cardsController.searchCardsLocal);
 
 // List sets from local CardCache
 router.get('/sets_local', cardsController.listSetsLocal);
@@ -25,9 +17,6 @@ router.post('/bulk', cardsController.getCardsByIds);
 
 router.get('/local/:id', cardsController.getCardByIdLocal);
 
-router.get(
-  '/:id',
-  cardsController.getCardById
-);
+router.get('/:id', cardsController.getCardById);
 
-module.exports = router;
+export default router;

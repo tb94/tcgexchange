@@ -1,20 +1,20 @@
-const { WishlistItem } = require('../../models');
+import { WishlistItem } from '../../models/index.js';
 
 const VALID_CONDITIONS = new Set(['NM', 'LP', 'MP', 'HP', 'DMG']);
 
-exports.list = async (req, res) => {
+async function list(req, res) {
   try {
     const items = await WishlistItem.findAll({
-      where: { userId: req.user.userId },
+      where: { userId: req.user.id },
       order: [['updatedAt', 'DESC']]
     });
     return res.json({ items });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
 
-exports.add = async (req, res) => {
+async function create(req, res) {
   try {
     const {
       cardId,
@@ -35,7 +35,7 @@ exports.add = async (req, res) => {
 
     // If same cardId exists, bump desired quantity and keep best (lowest number) priority
     const existing = await WishlistItem.findOne({
-      where: { userId: req.user.userId, cardId }
+      where: { userId: req.user.id, cardId }
     });
 
     if (existing) {
@@ -48,7 +48,7 @@ exports.add = async (req, res) => {
     }
 
     const item = await WishlistItem.create({
-      userId: req.user.userId,
+      userId: req.user.id,
       cardId,
       minCondition,
       quantityDesired: qty,
@@ -60,14 +60,14 @@ exports.add = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
 
-exports.update = async (req, res) => {
+async function update(req, res) {
   try {
     const id = Number(req.params.id);
     const { quantityDesired, minCondition, priority, notes } = req.body;
 
-    const item = await WishlistItem.findOne({ where: { id, userId: req.user.userId } });
+    const item = await WishlistItem.findOne({ where: { id, userId: req.user.id } });
     if (!item) return res.status(404).json({ error: 'not found' });
 
     if (minCondition !== undefined) {
@@ -96,16 +96,23 @@ exports.update = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
-};
+}
 
-exports.remove = async (req, res) => {
+async function remove(req, res) {
   try {
     const id = Number(req.params.id);
-    const item = await WishlistItem.findOne({ where: { id, userId: req.user.userId } });
+    const item = await WishlistItem.findOne({ where: { id, userId: req.user.id } });
     if (!item) return res.status(404).json({ error: 'not found' });
     await item.destroy();
     return res.json({ ok: true });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
+}
+
+export default {
+  list,
+  create,
+  update,
+  remove
 };

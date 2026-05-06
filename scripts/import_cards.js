@@ -1,151 +1,83 @@
-/* eslint-disable no-console */
+import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Import Pokemon card metadata from the pokemon-tcg-data repo JSON into SQLite.
-//
-// Usage:
-//   node scripts/import_cards.js
-//
-// Defaults:
-//   DATA_DIR=./data/pokemon-tcg-data
-//   CARDS_GLOB=$DATA_DIR/cards/en/*.json
+import { CardCache, sequelize } from '../models/index.js';
+import setConverter from '../src/util/setConverter.js';
 
-require('dotenv').config();
-
-const fs = require('fs');
-const path = require('path');
-
-const { CardCache, sequelize } = require('../models');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DATA_DIR = process.env.POKEMON_TCG_DATA_DIR || path.join(__dirname, '..', 'data', 'pokemon-tcg-data');
-const CARDS_DIR = path.join(DATA_DIR, 'cards', 'en');
 
-function safeJson(x) {
-  try { return JSON.stringify(x); } catch (e) { return null; }
-}
-
-function loadSetMetaMap(dataDir) {
-  // Returns map: setId -> { id, name, series, releaseDate, printedTotal }
-  // Supports either sets/en.json or sets/en/*.json.
-  const map = {};
-
-  const setsRoot = path.join(dataDir, 'sets');
-  const setsEnJson = path.join(setsRoot, 'en.json');
-  const setsEnDir = path.join(setsRoot, 'en');
-
+function safeJsonParse(s) {
   try {
-    if (fs.existsSync(setsEnJson)) {
-      const raw = fs.readFileSync(setsEnJson, 'utf8');
-      const arr = JSON.parse(raw);
-      if (Array.isArray(arr)) {
-        arr.forEach((s) => {
-          if (!s?.id) return;
-          map[s.id] = {
-            id: s.id,
-            name: s.name,
-            series: s.series,
-            releaseDate: s.releaseDate,
-            printedTotal: s.printedTotal
-          };
-        });
-      }
-      return map;
-    }
-
-    if (fs.existsSync(setsEnDir)) {
-      const files = fs.readdirSync(setsEnDir).filter((f) => f.endsWith('.json'));
-      files.forEach((f) => {
-        const p = path.join(setsEnDir, f);
-        const raw = fs.readFileSync(p, 'utf8');
-        const s = JSON.parse(raw);
-        if (!s?.id) return;
-        map[s.id] = {
-          id: s.id,
-          name: s.name,
-          series: s.series,
-          releaseDate: s.releaseDate,
-          printedTotal: s.printedTotal
-        };
-      });
-    }
+    return JSON.parse(s);
   } catch (e) {
-    // ignore; we'll just have an empty map
+    return null;
   }
-
-  return map;
 }
 
-async function main() {
-  if (!fs.existsSync(CARDS_DIR)) {
-    console.error(`Cards directory not found: ${CARDS_DIR}`);
-    console.error('Download and unzip PokemonTCG/pokemon-tcg-data into ./data/pokemon-tcg-data');
-    process.exit(1);
+async function run() {
+  const cardsPath = path.join(DATA_DIR, 'cards', 'en.json');
+  if (!fs.existsSync(cardsPath)) {
+    throw new Error(`Missing data file: ${cardsPath} (set POKEMON_TCG_DATA_DIR to your dataset root)`);
   }
 
-  await sequelize.authenticate();
+  const raw = fs.readFileSync(cardsPath, 'utf8');
+  const cards = safeJsonParse(raw);
+  if (!Array.isArray(cards)) {
+    throw new Error('Expected cards JSON to be an array');
+  }
 
-  const files = fs.readdirSync(CARDS_DIR).filter((f) => f.endsWith('.json'));
-  console.log(`Found ${files.length} card-set files in ${CARDS_DIR}`);
+  await sequelize.sync();
 
-  let total = 0;
-  let upserted = 0;
+  const BATCH = 1000;
+  for (let i = 0; i < cards.length; i += BATCH) {
+    const chunk = cards.slice(i, i + BATCH);
 
-  // eslint-disable-next-line global-require
-  const setConverter = require('../src/util/setConverter');
-  const setMetaMap = loadSetMetaMap(DATA_DIR);
+    // eslint-disable-next-line no-await-in-loop
+    await CardCache.bulkCreate(
+      chunk.map((c) => {
+        const setId = c.set?.id;
+        const setName = c.set?.name;
 
-  for (const file of files) {
-    const p = path.join(CARDS_DIR, file);
-    const raw = fs.readFileSync(p, 'utf8');
-    const cards = JSON.parse(raw);
-    if (!Array.isArray(cards)) continue;
+        return {
+          id: c.id,
+          name: c.name,
+          setId,
+          setName,
+          setSeries: c.set?.series,
+          setReleaseDate: c.set?.releaseDate,
+          setPrintedTotal: c.set?.printedTotal,
+          number: c.number,
+          hp: c.hp,
+          rarity: c.rarity,
+          supertype: c.supertype,
+          subtypesJson: JSON.stringify(c.subtypes || []),
+          typesJson: JSON.stringify(c.types || []),
+          imageSmall: c.images?.small,
+          imageLarge: c.images?.large
+        };
+      }),
+      { updateOnDuplicate: ['name', 'setId', 'setName', 'setSeries', 'setReleaseDate', 'setPrintedTotal', 'number', 'hp', 'rarity', 'supertype', 'subtypesJson', 'typesJson', 'imageSmall', 'imageLarge'] }
+    );
 
-    // The pokemon-tcg-data repo stores cards in per-set files.
-    // Some dumps include full card.set {id,name,...}, others omit it.
-    // Use filename as a fallback setId.
-    const setIdFromFile = path.basename(file, '.json');
-    const setMetaFromFile = setMetaMap[setIdFromFile] || null;
-    const setNameFromFile = setMetaFromFile?.name || setConverter.getSetNameById(setIdFromFile) || null;
-
-    for (const c of cards) {
-      total += 1;
-      if (!c || !c.id || !c.name) continue;
-
-      const finalSetId = c.set?.id || c.setId || setIdFromFile || null;
-      const meta = (finalSetId && setMetaMap[finalSetId]) ? setMetaMap[finalSetId] : setMetaFromFile;
-
-      const row = {
-        id: c.id,
-        name: c.name,
-        setId: finalSetId,
-        setName: c.set?.name || c.setName || meta?.name || setNameFromFile || null,
-        setSeries: c.set?.series || c.setSeries || meta?.series || null,
-        setReleaseDate: c.set?.releaseDate || c.setReleaseDate || meta?.releaseDate || null,
-        setPrintedTotal: (c.set?.printedTotal ?? c.setPrintedTotal ?? meta?.printedTotal) ?? null,
-        number: c.number,
-        hp: c.hp || null,
-        rarity: c.rarity,
-        supertype: c.supertype,
-        subtypesJson: c.subtypes ? safeJson(c.subtypes) : null,
-        typesJson: c.types ? safeJson(c.types) : null,
-        imageSmall: c.images?.small,
-        imageLarge: c.images?.large
-      };
-
-      // upsert by primary key
-      await CardCache.upsert(row);
-      upserted += 1;
-
-      if (upserted % 2000 === 0) {
-        console.log(`Upserted ${upserted}...`);
-      }
+    if (i % (BATCH * 10) === 0) {
+      // eslint-disable-next-line no-console
+      console.log(`Imported ${Math.min(i + BATCH, cards.length)} / ${cards.length}`);
     }
   }
 
-  console.log(`Done. Parsed=${total}, upserted=${upserted}`);
-  await sequelize.close();
+  // eslint-disable-next-line no-console
+  console.log('Import complete');
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+run()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    process.exit(1);
+  });

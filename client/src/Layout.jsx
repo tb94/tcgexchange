@@ -108,6 +108,7 @@ export default function Layout() {
           <NavItem to="/app/wishlist">Wishlist</NavItem>
           <NavItem to="/app/trades">Trades</NavItem>
           <NavItem to="/app/profile">Profile</NavItem>
+          {user?.role === 'admin' && <NavItem to="/app/admin">Admin</NavItem>}
         </div>
 
         <div className="mt-6 grid gap-3">

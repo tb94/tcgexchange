@@ -9,6 +9,7 @@ import cardRoutes from './routes/cards.js';
 import collectionRoutes from './routes/collection.js';
 import wishlistRoutes from './routes/wishlist.js';
 import tradesRoutes from './routes/trades.js';
+import adminRoutes from './routes/admin.js';
 
 import { sequelize } from '../models/index.js';
 
@@ -33,6 +34,7 @@ app.use('/cards', cardRoutes);
 app.use('/collection', collectionRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/trades', tradesRoutes);
+app.use('/admin', adminRoutes);
 
 // SPA fallback for React routes (make React the default UI)
 app.get(['/', '/app', '/app/*'], (req, res) => {

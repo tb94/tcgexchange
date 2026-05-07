@@ -31,32 +31,48 @@ function toggleValue(values, value) {
   return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 }
 
-function CheckboxGroup({ title, options, selected, onChange }) {
+function MultiSelectDropdown({ id, title, options, selected, onChange, openDropdownId, setOpenDropdownId }) {
   const allSelected = options.length > 0 && selected.length === options.length;
+  const isOpen = openDropdownId === id;
+
   return (
-    <div className="rounded-xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">{title}</div>
-        <button type="button" className="text-xs font-semibold text-sky-700 dark:text-cyan-300" onClick={() => onChange(allSelected ? [] : options)}>
-          {allSelected ? 'Clear all' : 'Select all'}
-        </button>
-      </div>
-      <div className="mt-2 grid max-h-40 gap-2 overflow-auto pr-1">
-        {options.map((option) => (
-          <label key={option} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={selected.includes(option)} onChange={() => onChange(toggleValue(selected, option))} />
-            <span>{option}</span>
-          </label>
-        ))}
-      </div>
+    <div className="relative z-[120]">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
+        onClick={() => setOpenDropdownId(isOpen ? null : id)}
+        aria-expanded={isOpen}
+      >
+        <span className="font-semibold">{title}</span>
+        <span className="text-xs text-slate-500">{selected.length ? `${selected.length} selected` : 'Any'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full z-[200] mt-1 w-full min-w-52 rounded-xl border border-slate-900/10 bg-white p-3 shadow-xl dark:border-white/10 dark:bg-[#0b1220]">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">{title}</div>
+            <button type="button" className="text-xs font-semibold text-sky-700 dark:text-cyan-300" onClick={() => onChange(allSelected ? [] : options)}>
+              {allSelected ? 'Clear all' : 'Select all'}
+            </button>
+          </div>
+          <div className="grid max-h-56 gap-2 overflow-auto pr-1">
+            {options.map((option) => (
+              <label key={option} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={selected.includes(option)} onChange={() => onChange(toggleValue(selected, option))} />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function FilterDrawer({ filters, setFilters }) {
+function FilterDrawer({ filters, setFilters, openDropdownId, setOpenDropdownId }) {
   return (
     <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-      <div className="grid gap-2 md:grid-cols-3">
+      <div className="relative z-[100] grid gap-2 md:grid-cols-3">
         <input
           className="input"
           value={filters.name}
@@ -69,23 +85,32 @@ function FilterDrawer({ filters, setFilters }) {
           onChange={(e) => setFilters((prev) => ({ ...prev, setText: e.target.value }))}
           placeholder="Set name or id"
         />
-        <CheckboxGroup
+        <MultiSelectDropdown
+          id="rarity"
           title="Rarity"
           options={RARITIES}
           selected={filters.rarities}
           onChange={(values) => setFilters((prev) => ({ ...prev, rarities: values }))}
+          openDropdownId={openDropdownId}
+          setOpenDropdownId={setOpenDropdownId}
         />
-        <CheckboxGroup
+        <MultiSelectDropdown
+          id="supertype"
           title="Supertype"
           options={SUPERTYPES}
           selected={filters.supertypes}
           onChange={(values) => setFilters((prev) => ({ ...prev, supertypes: values }))}
+          openDropdownId={openDropdownId}
+          setOpenDropdownId={setOpenDropdownId}
         />
-        <CheckboxGroup
+        <MultiSelectDropdown
+          id="type"
           title="Type"
           options={TYPES}
           selected={filters.types}
           onChange={(values) => setFilters((prev) => ({ ...prev, types: values }))}
+          openDropdownId={openDropdownId}
+          setOpenDropdownId={setOpenDropdownId}
         />
         <label className="flex items-center gap-2 rounded-xl border border-slate-900/10 px-3 py-2 text-sm dark:border-white/10">
           <input
@@ -109,6 +134,7 @@ function FilterDrawer({ filters, setFilters }) {
 
 function CardPicker({ title, subtitle, items, selected, setSelected }) {
   const [showFilters, setShowFilters] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
   const [filters, setFilters] = useState({
     name: '',
     setText: '',
@@ -160,14 +186,33 @@ function CardPicker({ title, subtitle, items, selected, setSelected }) {
           <div className="font-bold">{title}</div>
           <div className="text-xs text-slate-600 dark:text-slate-400">{subtitle}</div>
         </div>
-        <button type="button" className="btn btn-ghost" onClick={() => setShowFilters((v) => !v)}>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => {
+            setShowFilters((v) => {
+              const next = !v;
+              if (!next) setOpenDropdownId(null);
+              return next;
+            });
+          }}
+        >
           ☰ Filters
         </button>
       </div>
 
-      {showFilters && <div className="mt-3"><FilterDrawer filters={filters} setFilters={setFilters} /></div>}
+      {showFilters && (
+        <div className="mt-3">
+          <FilterDrawer
+            filters={filters}
+            setFilters={setFilters}
+            openDropdownId={openDropdownId}
+            setOpenDropdownId={setOpenDropdownId}
+          />
+        </div>
+      )}
 
-      <div className="mt-3 max-h-[46vh] overflow-auto pr-1">
+      <div className={`mt-3 max-h-[46vh] overflow-auto pr-1 ${openDropdownId ? 'pointer-events-none' : ''}`}>
         <div className="grid gap-2">
           {filtered.map((item) => {
             const isSelected = !!selected[item.id];

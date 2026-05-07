@@ -76,7 +76,7 @@ export default function Layout() {
         <button
           type="button"
           aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px]"
+          className="fixed inset-0 z-[1200] bg-black/40 backdrop-blur-[1px]"
           onClick={() => setMenuOpen(false)}
         />
       )}
@@ -84,7 +84,7 @@ export default function Layout() {
       {/* Mobile left drawer */}
       <aside
         className={
-          `fixed left-0 top-0 z-50 h-full w-[82vw] max-w-xs transform border-r border-slate-900/10 bg-white/90 p-4 shadow-2xl backdrop-blur transition-transform duration-200 dark:border-white/10 dark:bg-[#0b1220]/90 ` +
+          `fixed left-0 top-0 z-[1210] h-full w-[82vw] max-w-xs transform border-r border-slate-900/10 bg-white/90 p-4 shadow-2xl backdrop-blur transition-transform duration-200 dark:border-white/10 dark:bg-[#0b1220]/90 ` +
           (menuOpen ? 'translate-x-0' : '-translate-x-full')
         }
         aria-hidden={!menuOpen}

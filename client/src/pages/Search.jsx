@@ -21,32 +21,53 @@ function toggleValue(values, value) {
   return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 }
 
-function CheckboxGroup({ title, options, selected, onChange }) {
-  const allSelected = options.length > 0 && selected.length === options.length;
+function MultiSelectDropdown({ id, title, options, selected, onChange, openDropdownId, setOpenDropdownId }) {
+  const normalized = options.map((option) => {
+    if (typeof option === 'string') return { value: option, label: option };
+    return { value: option.value, label: option.label || option.value };
+  });
+  const values = normalized.map((option) => option.value);
+  const allSelected = values.length > 0 && selected.length === values.length;
+  const isOpen = openDropdownId === id;
+
   return (
-    <div className="rounded-xl border border-slate-900/10 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">{title}</div>
-        <button
-          className="text-xs font-semibold text-sky-700 dark:text-cyan-300"
-          type="button"
-          onClick={() => onChange(allSelected ? [] : options)}
-        >
-          {allSelected ? 'Clear all' : 'Select all'}
-        </button>
-      </div>
-      <div className="mt-2 grid max-h-52 gap-2 overflow-auto pr-1">
-        {options.map((option) => (
-          <label key={option} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={selected.includes(option)}
-              onChange={() => onChange(toggleValue(selected, option))}
-            />
-            <span>{option}</span>
-          </label>
-        ))}
-      </div>
+    <div className="relative z-[340]">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between rounded-xl border border-slate-900/10 bg-white/60 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
+        onClick={() => setOpenDropdownId(isOpen ? null : id)}
+        aria-expanded={isOpen}
+      >
+        <span className="font-semibold">{title}</span>
+        <span className="text-xs text-slate-500">{selected.length ? `${selected.length} selected` : 'Any'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full z-[360] mt-1 w-full min-w-52 rounded-xl border border-slate-900/10 bg-white p-3 shadow-xl dark:border-white/10 dark:bg-[#0b1220]">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">{title}</div>
+            <button
+              className="text-xs font-semibold text-sky-700 dark:text-cyan-300"
+              type="button"
+              onClick={() => onChange(allSelected ? [] : values)}
+            >
+              {allSelected ? 'Clear all' : 'Select all'}
+            </button>
+          </div>
+          <div className="grid max-h-56 gap-2 overflow-auto pr-1">
+            {normalized.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(option.value)}
+                  onChange={() => onChange(toggleValue(selected, option.value))}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -123,6 +144,7 @@ export default function Search() {
   const [supertypes, setSupertypes] = useState(initialSupertypes);
   const [types, setTypes] = useState(initialTypes);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const [page, setPage] = useState(1);
   const [pageSize] = useState(24);
@@ -385,7 +407,7 @@ export default function Search() {
   return (
     <div className="grid gap-4">
       <form
-        className="card"
+        className="card relative z-[300]"
         onSubmit={(e) => {
           e.preventDefault();
           if (loading) return;
@@ -427,7 +449,13 @@ export default function Search() {
           <button
             type="button"
             className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-            onClick={() => setFiltersOpen((v) => !v)}
+            onClick={() => {
+              setFiltersOpen((v) => {
+                const next = !v;
+                if (!next) setOpenDropdownId(null);
+                return next;
+              });
+            }}
             aria-expanded={filtersOpen}
           >
             <div>
@@ -440,38 +468,50 @@ export default function Search() {
           </button>
 
           {filtersOpen && (
-            <div className="grid gap-3 border-t border-slate-900/10 p-4 dark:border-white/10 md:grid-cols-5">
+            <div className="relative z-[320] grid gap-3 border-t border-slate-900/10 p-4 dark:border-white/10 md:grid-cols-5">
               <div className="md:col-span-2">
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Name</label>
                 <input className="input mt-1" value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Pikachu" />
               </div>
 
-              <CheckboxGroup
+              <MultiSelectDropdown
+                id="set"
                 title="Set"
-                options={sets.map((s) => s.id)}
+                options={sets.map((s) => ({ value: s.id, label: s.name || s.id }))}
                 selected={setIds}
                 onChange={setSetIds}
+                openDropdownId={openDropdownId}
+                setOpenDropdownId={setOpenDropdownId}
               />
 
-              <CheckboxGroup
+              <MultiSelectDropdown
+                id="rarity"
                 title="Rarity"
                 options={RARITY_OPTIONS}
                 selected={rarities}
                 onChange={setRarities}
+                openDropdownId={openDropdownId}
+                setOpenDropdownId={setOpenDropdownId}
               />
 
-              <CheckboxGroup
+              <MultiSelectDropdown
+                id="supertype"
                 title="Supertype"
                 options={SUPERTYPE_OPTIONS}
                 selected={supertypes}
                 onChange={setSupertypes}
+                openDropdownId={openDropdownId}
+                setOpenDropdownId={setOpenDropdownId}
               />
 
-              <CheckboxGroup
+              <MultiSelectDropdown
+                id="type"
                 title="Type"
                 options={TYPE_OPTIONS}
                 selected={types}
                 onChange={setTypes}
+                openDropdownId={openDropdownId}
+                setOpenDropdownId={setOpenDropdownId}
               />
             </div>
           )}
@@ -488,6 +528,7 @@ export default function Search() {
               setRarities([]);
               setSupertypes([]);
               setTypes([]);
+              setOpenDropdownId(null);
             }}
           >
             Clear
@@ -513,7 +554,10 @@ export default function Search() {
         </div>
       )}
 
-      <div ref={gridContainerRef} className="w-full">
+      <div
+        ref={gridContainerRef}
+        className={`w-full ${(filtersOpen && openDropdownId) ? 'pointer-events-none' : ''}`}
+      >
         <div
           className="card-grid"
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(${cardSize.minTilePx}px, 1fr))` }}

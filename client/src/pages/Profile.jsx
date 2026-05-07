@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiRequest } from '../api';
 
 export default function Profile() {
@@ -133,14 +134,28 @@ export default function Profile() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
-              <div className="font-bold">Security</div>
-              <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Profile details are read-only here. Use the button below if you need to update your password.
+            <div className="grid gap-4">
+              {me.role === 'admin' && (
+                <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+                  <div className="font-bold">Admin portal</div>
+                  <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    You have admin access. Use the button below to manage users in the admin portal.
+                  </div>
+                  <Link className="btn btn-primary mt-4" to="/app/admin">
+                    Open admin portal
+                  </Link>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+                <div className="font-bold">Security</div>
+                <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Profile details are read-only here. Use the button below if you need to update your password.
+                </div>
+                <button className="btn btn-primary mt-4" onClick={() => setPasswordOpen(true)}>
+                  Change password
+                </button>
               </div>
-              <button className="btn btn-primary mt-4" onClick={() => setPasswordOpen(true)}>
-                Change password
-              </button>
             </div>
           </div>
         )}

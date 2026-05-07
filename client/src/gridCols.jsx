@@ -1,19 +1,15 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
 const GridColsContext = createContext(null);
 
 export function GridColsProvider({ children }) {
-  const [maxCols, setMaxCols] = useState(() => {
-    const raw = localStorage.getItem('gridMaxCols');
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return 3;
-    // Allow a large number for "Auto" (effectively uncapped).
-    return Math.min(99, Math.max(1, Math.floor(n)));
-  });
+  // Grid columns are always auto for now; keep context shape stable for callers.
+  const maxCols = 99;
+  const setMaxCols = () => {};
 
   useEffect(() => {
-    localStorage.setItem('gridMaxCols', String(maxCols));
-  }, [maxCols]);
+    localStorage.setItem('gridMaxCols', '99');
+  }, []);
 
   const value = useMemo(() => ({ maxCols, setMaxCols }), [maxCols]);
   return <GridColsContext.Provider value={value}>{children}</GridColsContext.Provider>;

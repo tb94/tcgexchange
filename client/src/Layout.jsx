@@ -4,7 +4,6 @@ import { apiRequest, clearToken, getToken } from './api';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import { useTheme } from './theme';
 import { useCardSize } from './cardSize.jsx';
-import { useGridCols } from './gridCols.jsx';
 
 function NavItem({ to, children }) {
   return (
@@ -25,7 +24,6 @@ export default function Layout() {
   const token = getToken();
   const theme = useTheme();
   const cardSize = useCardSize();
-  const gridCols = useGridCols();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -124,20 +122,6 @@ export default function Layout() {
               onChange={(e) => cardSize.setScale(Number(e.target.value))}
               aria-label="Card size"
             />
-          </div>
-
-          <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-2 font-semibold text-slate-700 dark:text-slate-200">Grid columns</div>
-            <select
-              className="input"
-              value={gridCols.maxCols}
-              onChange={(e) => gridCols.setMaxCols(Number(e.target.value))}
-            >
-              <option value={99}>Auto</option>
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
           </div>
 
           <div className="flex items-center justify-between gap-2 rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">

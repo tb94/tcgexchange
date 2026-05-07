@@ -114,7 +114,7 @@ export default function Layout() {
           <div className="rounded-2xl border border-slate-900/10 bg-white/60 p-3 text-sm dark:border-white/10 dark:bg-white/5">
             <div className="mb-2 font-semibold text-slate-700 dark:text-slate-200">Card size</div>
             <input
-              className="input"
+              className="h-2 w-full accent-sky-600 dark:accent-cyan-400"
               type="range"
               min={0}
               max={100}

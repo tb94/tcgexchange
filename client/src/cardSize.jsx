@@ -30,40 +30,24 @@ export function CardSizeProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('cardSizeScale', String(scale));
 
-    // Use clamp() so sizing adapts to phone vs desktop widths.
-    // Interpolate between "Small" and "XXL" endpoints.
+    // Mapping note:
+    // We intentionally use direct px interpolation so slider endpoints map 1:1 visually:
+    // scale=0 => true min size, scale=100 => true max size, scale=50 => midpoint size.
     const t = clamp01(scale / 100);
 
-    const minMin = Math.round(lerp(180, 320, t));
-    const minVw = lerp(48, 92, t).toFixed(1);
-    const minMax = Math.round(lerp(260, 560, t));
-
-    const thumbHMin = Math.round(lerp(66, 120, t));
-    const thumbHVw = lerp(18, 34, t).toFixed(1);
-    const thumbHMax = Math.round(lerp(78, 190, t));
-
-    const thumbWMin = Math.round(lerp(46, 90, t));
-    const thumbWVw = lerp(14, 28, t).toFixed(1);
-    const thumbWMax = Math.round(lerp(56, 140, t));
-
-    const preset = {
-      min: `clamp(${minMin}px, ${minVw}vw, ${minMax}px)`,
-      h: `clamp(${thumbHMin}px, ${thumbHVw}vw, ${thumbHMax}px)`,
-      w: `clamp(${thumbWMin}px, ${thumbWVw}vw, ${thumbWMax}px)`,
-    };
+    const cardMinPx = Math.round(lerp(180, 320, t));
+    const thumbHPx = Math.round(lerp(66, 120, t));
+    const thumbWPx = Math.round(lerp(46, 90, t));
 
     const root = document.documentElement;
-    root.style.setProperty('--card-min', preset.min);
-    root.style.setProperty('--card-thumb-h', preset.h);
-    root.style.setProperty('--card-thumb-w', preset.w);
+    root.style.setProperty('--card-min', `${cardMinPx}px`);
+    root.style.setProperty('--card-thumb-h', `${thumbHPx}px`);
+    root.style.setProperty('--card-thumb-w', `${thumbWPx}px`);
   }, [scale]);
 
   const minTilePx = useMemo(() => {
-    // Used for responsive grid column calculations (in JS).
-    // Keep it a bit conservative vs CSS max so we don't overflow by a few px.
     const t = clamp01(scale / 100);
-    const cssMax = lerp(260, 560, t);
-    return Math.max(220, Math.round(cssMax * 0.86));
+    return Math.round(lerp(180, 320, t));
   }, [scale]);
 
   const value = useMemo(() => ({ scale, setScale, minTilePx }), [scale, minTilePx]);

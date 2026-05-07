@@ -12,7 +12,7 @@ export default function Register() {
   return (
     <div className="card">
       <div className="mb-1 text-lg font-bold">Create account</div>
-      <div className="mb-4 text-sm text-slate-400">This hits /auth/signup on the existing backend.</div>
+      <div className="mb-4 text-sm text-slate-400">Create a new account.</div>
 
       {err && <div className="mb-3 rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm">{err}</div>}
 
@@ -23,7 +23,7 @@ export default function Register() {
           setErr('');
           setLoading(true);
           try {
-            const data = await apiRequest('/auth/signup', { method: 'POST', body: { username, password } });
+            const data = await apiRequest('/auth/register', { method: 'POST', body: { username, password } });
             setToken(data.token);
             nav('/app/search');
           } catch (e2) {

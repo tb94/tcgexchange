@@ -10,6 +10,7 @@ import Wishlist from './pages/Wishlist.jsx';
 import Trades from './pages/Trades.jsx';
 import TradeDetail from './pages/TradeDetail.jsx';
 import Profile from './pages/Profile.jsx';
+import Admin from './pages/Admin.jsx';
 import { getToken } from './api';
 
 function RequireAuth({ children }) {
@@ -84,6 +85,15 @@ export default function App() {
             element={
               <RequireAuth>
                 <Profile />
+              </RequireAuth>
+            }
+          />
+
+          <Route
+            path="admin"
+            element={
+              <RequireAuth>
+                <Admin />
               </RequireAuth>
             }
           />

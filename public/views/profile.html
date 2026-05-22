@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile</title>
+  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/search.css" />
+  <link rel="stylesheet" href="/styles/inventory.css" />
+  <link rel="stylesheet" href="/styles/nav.css" />
+  <link rel="stylesheet" href="/styles/profile.css" />
+</head>
+
+<body>
+  <div id="header"></div>
+
+  <div class="container">
+    <div class="profile-wrap">
+      <h1>Profile</h1>
+      <div id="toast-container" class="toast-container"></div>
+
+      <div class="profile-card">
+        <div class="profile-grid">
+          <!-- Left column -->
+          <div>
+            <div class="profile-header">
+              <img id="avatarPreview" class="profile-avatar" alt="avatar" />
+              <div>
+                <div class="profile-meta">Username</div>
+                <div id="currentUsername" class="profile-username"></div>
+                <div class="profile-meta">User ID: <span id="currentUserId"></span></div>
+                <div class="profile-badge" style="margin-top:8px;">
+                  <span class="profile-dot"></span>
+                  <span>Neon profile</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <div class="profile-panel-title">Quick notes</div>
+              <div class="profile-meta">• Username is your login + display name</div>
+              <div class="profile-meta">• Avatar is a URL only (no uploads)</div>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div>
+            <div class="profile-panel-title">Update username / avatar URL</div>
+            <form id="profileForm" class="form">
+              <label class="label">
+                <span>Username</span>
+                <input id="username" placeholder="new_username" />
+                <div class="profile-help">Letters, numbers, underscore. Min 3 chars.</div>
+              </label>
+
+              <label class="label">
+                <span>Avatar Image URL (optional)</span>
+                <input id="avatarUrl" placeholder="https://..." />
+                <div class="profile-help">We store only the URL — not the image.</div>
+              </label>
+
+              <div class="profile-actions">
+                <button class="profile-btn-primary" type="submit">Save Profile</button>
+              </div>
+            </form>
+
+            <div class="profile-section">
+              <div class="profile-panel-title">Change password</div>
+              <form id="passwordForm" class="form">
+                <label class="label">
+                  <span>Current password</span>
+                  <input id="currentPassword" type="password" autocomplete="current-password" />
+                </label>
+
+                <label class="label">
+                  <span>New password</span>
+                  <input id="newPassword" type="password" autocomplete="new-password" />
+                  <div class="profile-help">Min 10 characters.</div>
+                </label>
+
+                <label class="label">
+                  <span>Confirm new password</span>
+                  <input id="confirmPassword" type="password" autocomplete="new-password" />
+                </label>
+
+                <div class="profile-actions">
+                  <button class="profile-btn-primary" type="submit">Update Password</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/scripts/util.js" defer></script>
+  <script src="/scripts/auth.js" defer></script>
+  <script src="/scripts/nav.js" defer></script>
+  <script src="/scripts/profile.js" defer></script>
+</body>
+
+</html>

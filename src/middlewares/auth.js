@@ -1,21 +1,16 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+export default (req, res, next) => {
+  const authHeader = req.header('Authorization');
+  const token = authHeader?.split(' ')[1];
 
-module.exports = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization header missing or malformed' });
-  }
-
-  const token = authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Access denied' });
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // This attaches the user info to the request
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
     return next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (e) {
+    return res.status(400).json({ error: 'Invalid token' });
   }
 };

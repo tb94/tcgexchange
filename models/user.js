@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     username: {
       type: DataTypes.STRING,
@@ -8,8 +8,27 @@ module.exports = (sequelize, DataTypes) => {
     password: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    avatarUrl: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    role: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'user'
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
     }
   });
+
+  User.associate = (models) => {
+    User.hasMany(models.CollectionItem, { foreignKey: 'userId', onDelete: 'CASCADE' });
+    User.hasMany(models.WishlistItem, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  };
 
   return User;
 };

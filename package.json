@@ -2,11 +2,15 @@
     "name": "tcgexchange",
     "version": "0.0.1",
     "description": "TCG Portfolio Sharing",
+    "type": "module",
     "main": "src/server.js",
     "scripts": {
         "dev": "node src/server.js",
         "lint": "eslint .",
-        "lint:fix": "eslint . --fix"
+        "lint:fix": "eslint . --fix",
+        "import:cards": "node scripts/import_cards.js",
+        "seed:matching-fixture": "node scripts/seed_matching_fixture.js",
+        "seed:matching-fixture:preview": "node scripts/seed_matching_fixture.js --preview"
     },
     "author": "Tim Bretz & Kyle LaPointe",
     "license": "ISC",

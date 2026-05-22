@@ -1,11 +1,13 @@
-const { validationResult } = require('express-validator');
-const { body } = require('express-validator');
-require('dotenv').config();
-const axios = require('axios');
-const setConverter = require('../util/setConverter');
+import { body, validationResult } from 'express-validator';
+import 'dotenv/config';
+import axios from 'axios';
+import { Op } from 'sequelize';
+
+import setConverter from '../util/setConverter.js';
+import { CardCache } from '../../models/index.js';
 
 // Input validation
-exports.searchValidation = [
+const searchValidation = [
   body('filters.name').optional().isString().withMessage('name must be a string'),
   body('filters.sets').optional().isArray().withMessage('set must be an array'),
   body('filters.sets.*').optional().isString().withMessage('each set must be a string'),
@@ -39,145 +41,100 @@ exports.searchValidation = [
   body('filters.legalities.*').optional().isString().withMessage('each legality must be a string'),
 
   body('page').optional().isInt({ min: 1 }),
-  body('pageSize').optional().isInt({ min: 1, max: 100 }) // Limit to 100 results per page
+  body('pageSize').optional().isInt({ min: 1, max: 100 })
 ];
 
 // format search parameters into a query string for pokemontcg.io API
 function buildQueryString(filters) {
   const queryParts = [];
 
-  // if no filters are provided, return an empty string
-  if (!filters || Object.keys(filters).length === 0) {
-    return '';
-  }
+  if (!filters || Object.keys(filters).length === 0) return '';
 
-  // Iterate over filters and build query string
-
-  // name: `(name:Pikachu)`
   if (filters.name && filters.name.trim() !== '') {
     queryParts.push(`name:"${filters.name}"`);
   }
 
-  // set: [] `(set.id:base1 OR set.id:base4)`
   if (filters.sets && filters.sets.length > 0) {
     queryParts.push(`(${setConverter.convertNamesToIds(filters.sets).map((set) => `set.id:${set}`).join(' OR ')})`);
   }
 
-  // types: [] `(types:grass OR types:fire)`
   if (filters.types && filters.types.length > 0) {
     queryParts.push(`(${filters.types.map((type) => `types:${type}`).join(' OR ')})`);
   }
 
-  // case insensitivity through the API means we can't search for "ex"
-  // without also searching for "EX" - probably leave this out until we can figure out a plan.
-  // subtypes: [] `(subtypes:stage2 OR subtypes:ex)`
-  // if (filters.subtypes && filters.subtypes.length > 0) {
-  //     const subtypeQuery = filters.subtypes.map(subtype => `subtypes:${subtype}`).join(' OR ');
-  //     queryParts.push(`(${subtypeQuery})`);
-  // }
-
-  // supertype: [] `(supertype:Pokémon OR supertype:Trainer)`
   if (filters.supertypes && filters.supertypes.length > 0) {
     queryParts.push(`(${filters.supertypes.map((supertype) => `supertype:${supertype}`).join(' OR ')})`);
   }
 
-  // rarity: [] `(rarity:"Double Rare" OR rarity:"Hyper Rare")`
   if (filters.rarities && filters.rarities.length > 0) {
     queryParts.push(`(${filters.rarities.map((rarity) => `rarity:"${rarity}"`).join(' OR ')})`);
   }
 
-  // regulationMark: [] `(regulationMark:D OR regulationMark:E)`
   if (filters.regulationMarks && filters.regulationMarks.length > 0) {
     queryParts.push(`(${filters.regulationMarks.map((mark) => `regulationMark:${mark}`).join(' OR ')})`);
   }
 
-  // hp: { gte: 50, lte: 100 } `hp:[50 TO 100]`
-  if (filters.hp.gte !== undefined || filters.hp.lte !== undefined) {
+  if (filters.hp?.gte !== undefined || filters.hp?.lte !== undefined) {
     queryParts.push(`hp:[${filters.hp.gte || '*'} TO ${filters.hp.lte || '*'}]`);
   }
 
-  // retreatCost: { gte: 1, lte: 3 } `retreatCost:[1 TO 3]`
   if (filters.retreatCost?.gte !== undefined || filters.retreatCost?.lte !== undefined) {
     queryParts.push(`convertedRetreatCost:[${filters.retreatCost.gte || '*'} TO ${filters.retreatCost.lte || '*'}]`);
   }
 
-  // attack energy cost: { gte: 1, lte: 3 } `attacks.convertedEnergyCost:[1 TO 3]`
-  if (filters.attackCost.gte !== undefined || filters.attackCost.lte !== undefined) {
+  if (filters.attackCost?.gte !== undefined || filters.attackCost?.lte !== undefined) {
     queryParts.push(`attacks.convertedEnergyCost:[${filters.attackCost.gte || '*'} TO ${filters.attackCost.lte || '*'}]`);
   }
 
-  // nationalPokedexNumber: `nationalPokedexNumber:25`
   if (filters.nationalPokedexNumber) {
     queryParts.push(`nationalPokedexNumbers:${filters.nationalPokedexNumber}`);
   }
 
-  // cardnumber: `number:125`
   if (filters.cardnumber) {
     queryParts.push(`number:${filters.cardnumber}`);
   }
 
-  // artist: `artist:"John Doe~"`
   if (filters.artist) {
-    queryParts.push(`artist:"${filters.artist}~"`);
+    queryParts.push(`artist:"${filters.artist}"`);
   }
 
-  // text: `flavorText:"trees"`
   if (filters.text) {
-    queryParts.push(`flavorText:"${filters.text}"`);
+    queryParts.push(`text:"${filters.text}"`);
   }
 
-  // level: `level:17`
   if (filters.level) {
     queryParts.push(`level:${filters.level}`);
   }
 
-  // weaknesses: [] `(weaknesses.type:water OR weaknesses.type:fire)`
   if (filters.weaknesses && filters.weaknesses.length > 0) {
-    queryParts.push(`(${filters.weaknesses.map((weakness) => `weaknesses.type:${weakness}`).join(' OR ')})`);
+    queryParts.push(`(${filters.weaknesses.map((w) => `weaknesses.type:${w}`).join(' OR ')})`);
   }
 
-  // resistance: [] `(resistances.type:water OR resistances.type:fire)`
   if (filters.resistances && filters.resistances.length > 0) {
-    queryParts.push(`(${filters.resistances.map((resistance) => `resistances.type:${resistance}`).join(' OR ')})`);
+    queryParts.push(`(${filters.resistances.map((r) => `resistances.type:${r}`).join(' OR ')})`);
   }
 
-  // legalities: [] `(legalities.standard:legal OR legalities.expanded:legal)`
   if (filters.legalities && filters.legalities.length > 0) {
     queryParts.push(`(${filters.legalities.map((legality) => `legalities.${legality.toLowerCase()}:Legal`).join(' OR ')})`);
   }
 
-  //  I don't understand the pricing for the tcgplayer and cardmarket objects yet
-  // tcgplayer.prices: { gte: 15, lte: 30 }
-  // if (filters.tcgplayer) {}
-
-  // cardmarket.prices: { gte: 15, lte: 30 }
-
   return queryParts.join(' ');
 }
 
-// Search external api for cards
-exports.searchCards = async (req, res) => {
-  // Handle validation errors
+async function searchCards(req, res) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  // Extract filters from request body
-  const {
-    filters,
-    sort = 'name',
-    page = 1,
-    pageSize = 20
-  } = req.body;
+  const { filters, sort = 'name', page = 1, pageSize = 20 } = req.body;
 
   try {
-    // Build query string for PokémonTCG API
     const query = buildQueryString(filters);
 
-    // API Request
     const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
-      headers: { 'X-Api-Key': process.env.POKEMON_TCG_API_KEY },
+      headers: {
+        Accept: 'application/json',
+        'X-Api-Key': process.env.POKEMON_TCG_API_KEY
+      },
       params: {
         q: query,
         page,
@@ -191,16 +148,230 @@ exports.searchCards = async (req, res) => {
     console.error('Error fetching cards:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
-};
+}
 
-// Get a card by ID from the external API
-exports.getCardById = async (req, res) => {
+async function searchCardsLocal(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+  const { filters, sort = 'name', page = 1, pageSize = 20 } = req.body;
+
+  try {
+    const where = {};
+
+    if (filters?.name && filters.name.trim() !== '') {
+      where.name = { [Op.like]: `%${filters.name.trim()}%` };
+    }
+
+    if (filters?.sets && Array.isArray(filters.sets) && filters.sets.length > 0) {
+      const setVals = filters.sets.map((s) => String(s).trim()).filter(Boolean);
+
+      let mappedIds = [];
+      try {
+        mappedIds = setConverter.convertNamesToIds(setVals);
+      } catch (e) {
+        mappedIds = [];
+      }
+
+      const looksLikeSetId = (x) => /^[a-z0-9]+$/i.test(x) && x.length <= 12;
+      const directIds = setVals.filter(looksLikeSetId);
+
+      const setIds = Array.from(new Set([...(mappedIds || []), ...(directIds || [])]));
+
+      where[Op.or] = [
+        ...(setIds.length ? [{ setId: { [Op.in]: setIds } }] : []),
+        { setName: { [Op.in]: setVals } }
+      ];
+    }
+
+    if (filters?.rarities && Array.isArray(filters.rarities) && filters.rarities.length > 0) {
+      where.rarity = { [Op.in]: filters.rarities };
+    }
+
+    if (filters?.supertypes && Array.isArray(filters.supertypes) && filters.supertypes.length > 0) {
+      where.supertype = { [Op.in]: filters.supertypes };
+    }
+
+    if (filters?.types && Array.isArray(filters.types) && filters.types.length > 0) {
+      where.typesJson = {
+        [Op.and]: filters.types.map((t) => ({ [Op.like]: `%"${t}"%` }))
+      };
+    }
+
+    const order = [];
+    if (sort === 'name') order.push(['name', 'ASC']);
+    else if (sort === '-name') order.push(['name', 'DESC']);
+    else if (sort === 'number') order.push(['number', 'ASC']);
+    else if (sort === '-number') order.push(['number', 'DESC']);
+    else order.push(['name', 'ASC']);
+
+    const limit = Math.min(Number(pageSize) || 20, 100);
+    const offset = (Math.max(Number(page) || 1, 1) - 1) * limit;
+
+    const rows = await CardCache.findAll({ where, limit, offset, order });
+
+    const cards = rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      number: r.number,
+      set: {
+        name: r.setName,
+        id: r.setId,
+        ptcgoCode: r.setId
+      },
+      images: {
+        small: r.imageSmall,
+        large: r.imageLarge
+      },
+      rarity: r.rarity,
+      supertype: r.supertype
+    }));
+
+    return res.json({ cards, source: 'local' });
+  } catch (err) {
+    console.error('Local search failed:', err);
+    return res.status(500).json({ error: 'Local search failed' });
+  }
+}
+
+async function listSetsLocal(req, res) {
+  try {
+    const rows = await CardCache.findAll({
+      attributes: ['setId', 'setName'],
+      where: {
+        setId: { [Op.not]: null }
+      },
+      group: ['setId', 'setName'],
+      order: [['setName', 'ASC']]
+    });
+
+    const sets = rows
+      .map((r) => ({
+        id: r.setId,
+        name: r.setName || r.setId
+      }))
+      .filter((s) => s.id && s.id.trim() !== '')
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+    return res.json({ sets });
+  } catch (err) {
+    console.error('listSetsLocal failed:', err);
+    return res.status(500).json({ error: 'Failed to list sets' });
+  }
+}
+
+async function getCardsByIds(req, res) {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'ids must be a non-empty array' });
+  }
+
+  const uniqueIds = Array.from(new Set(ids)).slice(0, 250);
+
+  try {
+    const rows = await CardCache.findAll({ where: { id: uniqueIds } });
+
+    const map = {};
+    rows.forEach((r) => {
+      map[r.id] = {
+        id: r.id,
+        name: r.name,
+        set: r.setName,
+        number: r.number,
+        images: {
+          small: r.imageSmall,
+          large: r.imageLarge
+        }
+      };
+    });
+
+    const missing = uniqueIds.filter((x) => !map[x]).slice(0, 100);
+    if (missing.length === 0) {
+      return res.json({ cards: map, source: 'local' });
+    }
+
+    const q = `id:(${missing.map((x) => `\"${x}\"`).join(' OR ')})`;
+    const response = await axios.get('https://api.pokemontcg.io/v2/cards', {
+      headers: {
+        Accept: 'application/json',
+        'X-Api-Key': process.env.POKEMON_TCG_API_KEY
+      },
+      params: {
+        q,
+        page: 1,
+        pageSize: missing.length
+      }
+    });
+
+    const cards = response.data?.data || [];
+    cards.forEach((c) => {
+      map[c.id] = {
+        id: c.id,
+        name: c.name,
+        set: c.set?.name,
+        number: c.number,
+        images: c.images
+      };
+    });
+
+    return res.json({ cards: map, source: 'mixed' });
+  } catch (err) {
+    console.error('Error fetching cards by ids:', err?.response?.status || err?.message);
+    return res.status(502).json({ error: 'Failed to fetch card data' });
+  }
+}
+
+async function getCardByIdLocal(req, res) {
   const { id } = req.params;
 
   try {
-    // API Request
+    const r = await CardCache.findByPk(id);
+    if (!r) return res.status(404).json({ error: 'Card not found (local)' });
+
+    let types;
+    let subtypes;
+    try { types = r.typesJson ? JSON.parse(r.typesJson) : undefined; } catch (e) { types = undefined; }
+    try { subtypes = r.subtypesJson ? JSON.parse(r.subtypesJson) : undefined; } catch (e) { subtypes = undefined; }
+
+    const card = {
+      id: r.id,
+      name: r.name,
+      hp: r.hp,
+      types,
+      supertype: r.supertype,
+      subtypes,
+      rarity: r.rarity,
+      number: r.number,
+      set: {
+        id: r.setId,
+        name: r.setName,
+        series: r.setSeries,
+        releaseDate: r.setReleaseDate,
+        printedTotal: r.setPrintedTotal
+      },
+      images: {
+        small: r.imageSmall,
+        large: r.imageLarge
+      }
+    };
+
+    return res.json({ card, source: 'local' });
+  } catch (err) {
+    console.error('getCardByIdLocal failed:', err);
+    return res.status(500).json({ error: 'Failed to fetch card (local)' });
+  }
+}
+
+async function getCardById(req, res) {
+  const { id } = req.params;
+
+  try {
     const response = await axios.get(`https://api.pokemontcg.io/v2/cards/${id}`, {
-      headers: { 'X-Api-Key': process.env.POKEMON_TCG_API_KEY }
+      headers: {
+        Accept: 'application/json',
+        'X-Api-Key': process.env.POKEMON_TCG_API_KEY
+      }
     });
 
     if (response.data.count === 0 && response.data.totalCount === 0) {
@@ -212,4 +383,14 @@ exports.getCardById = async (req, res) => {
     console.error('Error fetching card by ID:', err);
     return res.status(500).json({ error: 'Failed to fetch card data' });
   }
+}
+
+export default {
+  searchValidation,
+  searchCards,
+  searchCardsLocal,
+  listSetsLocal,
+  getCardsByIds,
+  getCardByIdLocal,
+  getCardById
 };

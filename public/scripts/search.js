@@ -4,6 +4,9 @@ let loading = false;
 let allCardsLoaded = false;
 let firstSearch = false;
 
+// inventory modal injected from partial
+let invModalReady = false;
+
 // Enum values for dropdowns
 const enums = {
     sets: [ // lol 
@@ -203,15 +206,44 @@ async function searchCards(page = 1, append = false) {
     loading = true;
 
     try {
-        const data = await apiRequest('/cards/search', 'POST', {
-            filters: filters,
-            page,
-            pageSize,
-            sort: form.sort.value || 'name'
-        });
+        const allowApiFallback = localStorage.getItem('allowApiFallback') === 'true';
+
+        // Prefer local search (CardCache). Optionally fall back to external API only if local returns 0.
+        let data;
+        try {
+            data = await apiRequest('/cards/search_local', 'POST', {
+                filters: filters,
+                page,
+                pageSize,
+                sort: form.sort.value || 'name'
+            });
+        } catch (errLocal) {
+            if (!allowApiFallback) throw errLocal;
+            data = await apiRequest('/cards/search', 'POST', {
+                filters: filters,
+                page,
+                pageSize,
+                sort: form.sort.value || 'name'
+            });
+        }
+
+        // If local search returns nothing, optionally try external API as a fallback.
+        if (allowApiFallback && (!data?.cards || data.cards.length === 0)) {
+            data = await apiRequest('/cards/search', 'POST', {
+                filters: filters,
+                page,
+                pageSize,
+                sort: form.sort.value || 'name'
+            });
+        }
 
         if (!data.cards || data.cards.length === 0) {
-            if (!append) container.innerHTML = '<p>No cards found.</p>';
+            if (!append) {
+                const allowApiFallback = localStorage.getItem('allowApiFallback') === 'true';
+                container.innerHTML = allowApiFallback
+                    ? '<p>No cards found.</p>'
+                    : '<p>No cards found (local-only search). Turn on API Fallback to broaden results.</p>';
+            }
             allCardsLoaded = true;
             return;
         }
@@ -224,8 +256,11 @@ async function searchCards(page = 1, append = false) {
             <img src="${card.images.large}" alt="${card.name}" />
         </a>
         <h3>${card.name}</h3>
-        <small>${card.set.ptcgoCode}: ${card.number}</small>
-        <button data-id="${card.id}">+ Collection</button>`;
+        <small>${(card.set && (card.set.ptcgoCode || card.set.name)) ? (card.set.ptcgoCode || card.set.name) : 'SET'}: ${card.number || ''}</small>
+        <div style="display:flex; gap:.5rem; margin-top:.5rem;">
+          <button data-action="add-collection" data-id="${card.id}">+ Collection</button>
+          <button data-action="add-wishlist" data-id="${card.id}">+ Wishlist</button>
+        </div>`;
             container.appendChild(cardEl);
 
             requestAnimationFrame(() => {
@@ -272,9 +307,44 @@ function populateMultiselect(id, options) {
     });
 }
 
+// Populate sets dropdown from local DB (CardCache)
+function populateSetsFromDb(sets) {
+    const container = document.getElementById('sets');
+    if (!container) return;
+    container.innerHTML = '';
+    sets.forEach((s) => {
+        const option = document.createElement('option');
+        option.value = s.id; // IMPORTANT: use setId as value
+        option.textContent = s.name || s.id;
+        container.appendChild(option);
+    });
+}
+
 // Populate multiselect dropdowns on page load
-document.addEventListener('DOMContentLoaded', () => {
-    populateMultiselect("sets", enums.sets);
+document.addEventListener('DOMContentLoaded', async () => {
+    // API fallback toggle (persisted)
+    const apiToggle = document.getElementById('apiFallbackToggle');
+    if (apiToggle) {
+        apiToggle.checked = localStorage.getItem('allowApiFallback') === 'true';
+        apiToggle.addEventListener('change', () => {
+            localStorage.setItem('allowApiFallback', apiToggle.checked);
+            showToast(apiToggle.checked ? 'API fallback enabled' : 'Local-only search enabled', 'info');
+        });
+    }
+
+    // Sets: load from local DB to guarantee the filter matches CardCache
+    try {
+        const resp = await apiRequest('/cards/sets_local');
+        if (resp?.sets && Array.isArray(resp.sets) && resp.sets.length > 0) {
+            populateSetsFromDb(resp.sets);
+        } else {
+            // fallback to hardcoded list (values will be set names)
+            populateMultiselect("sets", enums.sets);
+        }
+    } catch (e) {
+        populateMultiselect("sets", enums.sets);
+    }
+
     populateMultiselect("types", enums.types);
     populateMultiselect("supertypes", enums.supertypes);
     populateMultiselect("rarities", enums.rarities);
@@ -282,14 +352,39 @@ document.addEventListener('DOMContentLoaded', () => {
     populateMultiselect("weaknesses", enums.types);
     populateMultiselect("resistances", enums.types);
     populateMultiselect("legalities", enums.legalities);
+
+    // inject modal
+    try {
+        const res = await fetch('/partials/inventory-modal.html');
+        const html = await res.text();
+        document.body.insertAdjacentHTML('beforeend', html);
+        invModalReady = true;
+        setupInventoryModal();
+    } catch (e) {
+        console.warn('Failed to load inventory modal', e);
+    }
+
+    // click handlers for add buttons
+    document.getElementById('card-results')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        if (!invModalReady) return;
+        const cardId = btn.dataset.id;
+        const kind = btn.dataset.action === 'add-wishlist' ? 'wishlist' : 'collection';
+        openInventoryModal({ kind, cardId });
+    });
 });
 
 // Check if at least one filter is applied
 function hasAtLeastOneFilter(filters) {
+    if (!filters) return false;
+
     return Object.values(filters).some(value => {
+        if (value === null || value === undefined) return false;
         if (Array.isArray(value)) return value.length > 0;
         if (typeof value === 'string') return value.trim() !== '';
         if (typeof value === 'number') return true;
+        if (typeof value === 'object') return hasAtLeastOneFilter(value);
         return false;
     });
 }

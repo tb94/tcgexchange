@@ -1,0 +1,24 @@
+/*
+  Keep this file minimal.
+  Tailwind + styles.css define the app's look/feel.
+  (The original Vite starter CSS had body:flex centering, which breaks app layouts on mobile.)
+*/
+
+:root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
